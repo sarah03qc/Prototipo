@@ -1,16 +1,98 @@
-# React + Vite
+# SIA-CENCINAI — Prototipo navegable de Atención Interdisciplinaria
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Segunda iteración del prototipo del **Sistema de apoyo a la Atención Interdisciplinaria (SIA-CENCINAI)**.
 
-Currently, two official plugins are available:
+Esta versión está orientada a **validación rápida con stakeholders**. No pretende representar todavía una implementación productiva ni sustituir SIDINACC.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Objetivos de esta iteración
 
-## React Compiler
+- Convertir historias de usuario y requerimientos en pantallas navegables.
+- Validar flujo, terminología, variables y experiencia de usuario.
+- Demostrar cómo reducir redigitación y fragmentación documental.
+- Mostrar registro individual y grupal.
+- Mostrar reportería y control de calidad Regional.
+- Simular trabajo offline y captura asistida por OCR.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Alcance de prototipo
 
-## Expanding the Oxlint configuration
+### Navegable / interactivo
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- Dashboard operativo.
+- Personas y búsqueda.
+- Referencias de A.I.
+- Sesiones interdisciplinarias.
+- Valoración situacional.
+- Casos de A.I.
+- Atenciones individuales.
+- Intervenciones grupales multi-participante.
+- Historial longitudinal.
+- Hub documental.
+- Reportería.
+- Control de calidad.
+- Consolidado Regional.
+- Simulación offline.
+- Simulación OCR con revisión humana.
+
+### Simulado / no productivo
+
+- Autenticación.
+- Integraciones con SIDINACC/SINIRUBE.
+- Persistencia de backend.
+- OCR real.
+- Sincronización offline real.
+- Firma electrónica.
+- Exportaciones institucionales.
+
+## Datos
+
+Todos los datos incluidos son **sintéticos y ficticios**.
+
+## Ejecutar
+
+```bash
+npm install
+npm run dev
+```
+
+Abrir la URL indicada por Vite, normalmente `http://localhost:5173`.
+
+## Estructura
+
+```text
+src/
+├── components/
+│   ├── AppShell.jsx
+│   └── ui.jsx
+├── data/
+│   ├── catalogs.js
+│   └── mockData.js
+├── hooks/
+│   └── usePrototypeStore.js
+├── pages/
+│   ├── DashboardPage.jsx
+│   ├── PeoplePage.jsx
+│   ├── ReferencesPage.jsx
+│   ├── SessionsPage.jsx
+│   ├── CasesPage.jsx
+│   ├── InterventionsPage.jsx
+│   ├── ReportingPage.jsx
+│   ├── QualityPage.jsx
+│   └── LabPage.jsx
+├── App.jsx
+├── index.css
+└── main.jsx
+```
+
+## Notas funcionales
+
+- La prioridad `Urgencia / Alto / Moderado / Bajo` corresponde al modelo objetivo del borrador 2026 y debe mantenerse configurable.
+- Las variables de valoración situacional se basan en los ámbitos Individual, Hogar-Familiar y Comunitario documentados en los anexos del proyecto.
+- El OCR se presenta bajo el principio **extraer → precargar → revisar → confirmar**.
+- Una intervención grupal se registra una sola vez y se relaciona con múltiples participantes.
+- El Consolidado Regional se representa como producto documental posterior al control de calidad y anterior al análisis/socialización Regional.
+
+## Metodología prevista
+
+```text
+Prototipo → revisión con stakeholders → feedback → refinamiento de HU/RF → nueva iteración
+```

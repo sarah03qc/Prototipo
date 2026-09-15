@@ -1,0 +1,51 @@
+import React, { useMemo, useState } from 'react';
+import { Check, ChevronRight, FilePlus2, Filter, X } from 'lucide-react';
+import { DETECTION_ORIGINS, REFERENCE_MOTIVES, REFERENCE_TYPES } from '../data/catalogs';
+import { AlertBanner, Badge, Field, PageHeader, ProgressSteps, SectionCard, StatusBadge, inputClass } from '../components/ui';
+
+function NewReferenceModal({ people, onClose, onSave }) {
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({
+    personId: people[0]?.id || '',
+    date: '2026-09-15',
+    type: 'No inmediata',
+    origin: 'Observación directa',
+    referredBy: 'Profesional del establecimiento',
+    motives: [],
+    riskFactors: [],
+    observations: '',
+    status: 'Pendiente de revisión',
+  });
+  const person = people.find((p) => p.id === form.personId);
+  const toggle = (key, value) => setForm((p) => ({ ...p, [key]: p[key].includes(value) ? p[key].filter((v) => v !== value) : [...p[key], value] }));
+
+  const steps = ['Persona y trazabilidad', 'Motivo', 'Información relevante', 'Revisar'];
+  return (
+    <div className="fixed inset-0 bg-stone-950/40 z-50 flex items-center justify-center p-4" onMouseDown={onClose}>
+      <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[92vh] overflow-hidden shadow-2xl" onMouseDown={(e) => e.stopPropagation()}>
+        <div className="p-5 border-b border-stone-200 flex items-start justify-between gap-3"><div><p className="text-xs font-semibold text-teal-700 uppercase tracking-wide">Nueva Referencia A.I.</p><h3 className="text-xl font-bold mt-1">Captura estructurada</h3><p className="text-xs text-stone-500 mt-1">Datos sintéticos. La referencia conserva únicamente información pertinente al motivo.</p></div><button onClick={onClose} className="p-2 rounded-xl hover:bg-stone-100"><X size={18}/></button></div>
+        <div className="p-5 border-b border-stone-100"><ProgressSteps steps={steps} current={step} /></div>
+        <div className="p-5 overflow-y-auto max-h-[63vh]">
+          {step === 0 && <div className="grid md:grid-cols-2 gap-4"><Field label="Persona" required><select value={form.personId} onChange={(e) => setForm({...form, personId:e.target.value})} className={inputClass}>{people.map((p)=><option key={p.id} value={p.id}>{p.name} · {p.identification}</option>)}</select></Field><Field label="Fecha de referencia" required><input type="date" value={form.date} onChange={(e)=>setForm({...form,date:e.target.value})} className={inputClass}/></Field><Field label="Tipo de atención" required><select value={form.type} onChange={(e)=>setForm({...form,type:e.target.value})} className={inputClass}>{REFERENCE_TYPES.map(v=><option key={v}>{v}</option>)}</select></Field><Field label="Origen de detección" required><select value={form.origin} onChange={(e)=>setForm({...form,origin:e.target.value})} className={inputClass}>{DETECTION_ORIGINS.map(v=><option key={v}>{v}</option>)}</select></Field><div className="md:col-span-2"><AlertBanner tone="blue" title="Datos maestros precargados"><div className="grid sm:grid-cols-3 gap-2 mt-2"><span>{person?.name}</span><span>{person?.identification}</span><span>{person?.establishment}</span></div></AlertBanner></div></div>}
+          {step === 1 && <div className="space-y-5">{Object.entries(REFERENCE_MOTIVES).map(([category, motives])=><div key={category}><p className="text-sm font-bold mb-2">{category}</p><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">{motives.map((m)=><label key={m} className={`border rounded-xl p-3 text-sm cursor-pointer ${form.motives.includes(m)?'border-teal-400 bg-teal-50':'border-stone-200'}`}><input type="checkbox" checked={form.motives.includes(m)} onChange={()=>toggle('motives',m)} className="mr-2 accent-teal-700"/>{m}</label>)}</div></div>)}</div>}
+          {step === 2 && <div className="space-y-4"><Field label="Factores de riesgo identificados"><div className="grid sm:grid-cols-2 gap-2">{['Factor de riesgo individual','Factor de riesgo hogar-familiar','Factor de riesgo comunitario','Otro factor de riesgo'].map(v=><label key={v} className={`border rounded-xl p-3 text-sm cursor-pointer ${form.riskFactors.includes(v)?'border-amber-400 bg-amber-50':'border-stone-200'}`}><input type="checkbox" checked={form.riskFactors.includes(v)} onChange={()=>toggle('riskFactors',v)} className="mr-2 accent-amber-600"/>{v}</label>)}</div></Field><Field label="Información relevante / observaciones" hint="Registrar únicamente información pertinente para el análisis interdisciplinario."><textarea rows={6} value={form.observations} onChange={(e)=>setForm({...form,observations:e.target.value})} className={inputClass} placeholder="Describa hallazgos, contexto y acciones previas..."/></Field></div>}
+          {step === 3 && <div className="space-y-4"><AlertBanner tone={form.type==='Urgencia'?'red':'blue'} title={`Referencia ${form.type}`}>La información será remitida a Oficina Local para revisión y eventual incorporación a una sesión interdisciplinaria.</AlertBanner><div className="grid md:grid-cols-2 gap-3 text-sm"><div className="border rounded-xl p-4"><p className="text-xs text-stone-400">Persona</p><p className="font-semibold mt-1">{person?.name}</p><p className="text-xs text-stone-500">{person?.identification}</p></div><div className="border rounded-xl p-4"><p className="text-xs text-stone-400">Trazabilidad</p><p className="font-semibold mt-1">{form.date} · {form.origin}</p><p className="text-xs text-stone-500">{form.referredBy}</p></div><div className="md:col-span-2 border rounded-xl p-4"><p className="text-xs text-stone-400">Motivos seleccionados</p><div className="flex flex-wrap gap-2 mt-2">{form.motives.map(m=><Badge key={m} tone="teal">{m}</Badge>)}</div></div></div></div>}
+        </div>
+        <div className="p-5 border-t border-stone-200 flex justify-between"><button onClick={()=>step===0?onClose():setStep(step-1)} className="px-4 py-2 rounded-xl border border-stone-200 text-sm font-semibold">{step===0?'Cancelar':'Atrás'}</button>{step<3?<button onClick={()=>setStep(step+1)} disabled={step===1 && form.motives.length===0} className="px-4 py-2 rounded-xl bg-teal-700 text-white text-sm font-semibold disabled:opacity-40 flex items-center gap-2">Continuar <ChevronRight size={15}/></button>:<button onClick={()=>{onSave(form);onClose();}} className="px-4 py-2 rounded-xl bg-teal-700 text-white text-sm font-semibold flex items-center gap-2"><Check size={15}/> Guardar referencia</button>}</div>
+      </div>
+    </div>
+  );
+}
+
+export default function ReferencesPage({ state, actions }) {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState('Todas');
+  const [selectedId, setSelectedId] = useState(state.references[0]?.id);
+  const filtered = useMemo(()=>status==='Todas'?state.references:state.references.filter(r=>r.status===status),[state.references,status]);
+  const selected = state.references.find(r=>r.id===selectedId) || filtered[0];
+  const person = state.people.find(p=>p.id===selected?.personId);
+
+  return <div className="space-y-6"><PageHeader eyebrow="Detección y referencia" title="Referencias a Atención Interdisciplinaria" description="Bandeja para recibir, revisar y preparar referencias antes de la sesión interdisciplinaria." actions={<button onClick={()=>setOpen(true)} className="bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"><FilePlus2 size={16}/> Nueva referencia</button>}/>
+    <div className="grid xl:grid-cols-[1fr_420px] gap-5 items-start"><SectionCard title="Bandeja de referencias" action={<div className="flex items-center gap-2"><Filter size={14} className="text-stone-400"/><select value={status} onChange={e=>setStatus(e.target.value)} className="text-xs border border-stone-200 rounded-lg px-2 py-1.5"><option>Todas</option>{[...new Set(state.references.map(r=>r.status))].map(s=><option key={s}>{s}</option>)}</select></div>}><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="text-left text-xs text-stone-400 border-b"><th className="py-2">Persona</th><th>Tipo</th><th>Origen</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>{filtered.map(r=>{const p=state.people.find(x=>x.id===r.personId);return <tr key={r.id} onClick={()=>setSelectedId(r.id)} className={`border-b border-stone-100 cursor-pointer hover:bg-stone-50 ${selected?.id===r.id?'bg-teal-50/50':''}`}><td className="py-3"><p className="font-medium">{p?.name}</p><p className="text-xs text-stone-400 font-mono">{p?.identification}</p></td><td><Badge tone={r.type==='Urgencia'?'red':'blue'}>{r.type}</Badge></td><td className="text-stone-600">{r.origin}</td><td className="text-stone-600">{r.date}</td><td><StatusBadge status={r.status}/></td></tr>})}</tbody></table></div></SectionCard>
+    {selected && <SectionCard title="Detalle de referencia" description={`${selected.id} · ${person?.establishment}`}><div className="space-y-4"><div><p className="text-xs text-stone-400">Persona</p><p className="font-bold mt-1">{person?.name}</p><p className="text-xs font-mono text-stone-500">{person?.identification}</p></div><div className="flex gap-2 flex-wrap"><Badge tone={selected.type==='Urgencia'?'red':'blue'}>{selected.type}</Badge><StatusBadge status={selected.status}/></div><div><p className="text-xs font-semibold text-stone-500 uppercase">Motivos</p><div className="flex flex-wrap gap-2 mt-2">{selected.motives.map(m=><Badge key={m} tone="teal">{m}</Badge>)}</div></div><div><p className="text-xs font-semibold text-stone-500 uppercase">Observaciones</p><p className="text-sm text-stone-600 mt-2">{selected.observations}</p></div><div className="grid gap-2"><button onClick={()=>actions.updateReference(selected.id,{status:'Recibida'})} className="border border-stone-200 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-stone-50">Marcar recibida</button><button onClick={()=>actions.updateReference(selected.id,{status:'Devuelta para corrección'})} className="border border-red-200 text-red-700 rounded-xl px-3 py-2 text-sm font-semibold hover:bg-red-50">Devolver para corrección</button></div></div></SectionCard>}</div>{open&&<NewReferenceModal people={state.people} onClose={()=>setOpen(false)} onSave={actions.addReference}/>}</div>;
+}
