@@ -1,60 +1,145 @@
-# SIA-CENCINAI — Implementation Notes v2
+# Implementation Notes — Prototipo v3
 
-## Archivos reemplazados
+**Fecha:** 16/09/2026
 
-- `src/App.jsx`
-- `src/index.css`
-- `README.md`
+## Decisiones aplicadas
 
-## Archivos nuevos
+### 1. Simplificación de alcance
 
-- `src/components/AppShell.jsx`
-- `src/components/ui.jsx`
-- `src/components/CaseSpecialPanels.jsx`
-- `src/data/catalogs.js`
-- `src/data/mockData.js`
-- `src/hooks/usePrototypeStore.js`
-- `src/pages/DashboardPage.jsx`
-- `src/pages/PeoplePage.jsx`
-- `src/pages/ReferencesPage.jsx`
-- `src/pages/SessionsPage.jsx`
-- `src/pages/CasesPage.jsx`
-- `src/pages/InterventionsPage.jsx`
-- `src/pages/ReportingPage.jsx`
-- `src/pages/QualityPage.jsx`
-- `src/pages/LabPage.jsx`
+Se retiró completamente de la navegación y del estado del prototipo:
 
-## Decisiones de implementación
+- `Control de calidad`;
+- remisiones regionales;
+- validar/devolver/re-enviar registros.
 
-1. Se conserva React + Vite + Tailwind ya presentes en el repositorio.
-2. No se agregó React Router: la navegación se maneja en memoria para mantener la demo simple.
-3. No se agregó backend: el estado vive en React y se persiste en `localStorage` para facilitar demostraciones.
-4. Los datos demo se concentran en `src/data/mockData.js`.
-5. Los catálogos funcionales y variables conocidas se concentran en `src/data/catalogs.js` para evitar strings dispersos.
-6. La demo incluye un selector de rol para validar perspectivas Local / Regional / Nacional.
-7. Offline y OCR se presentan como simulaciones funcionales, no como infraestructura real.
+La reportería ahora consulta directamente los datos dentro del ámbito permitido.
 
-## Elementos marcados para validación
+### 2. Acceso jerárquico
 
-- Clasificación final de prioridad del borrador 2026.
-- Código definitivo de Boleta de Valoración Situacional.
-- Formato definitivo del Reporte de A.I.
-- Campos exactos obligatorios por instrumento.
-- Reglas exactas de acceso a instrumentos sensibles.
-- Estrategia offline y persistencia local permitida.
-- Instrumento físico prioritario para piloto OCR.
-- Integraciones reales disponibles en SIDINACC.
+Se modela:
 
-## Demo sugerida
+`Nacional → Región → Oficina Local → Establecimiento`
 
-1. Inicio.
-2. Personas → Sofía Vargas.
-3. Referencias → Mateo Jiménez.
-4. Sesiones → valorar Mateo.
-5. Abrir caso.
-6. Casos → registrar atención.
-7. Intervenciones → crear grupal.
-8. Personas/Casos → comprobar historial longitudinal.
-9. Control de calidad → validar/devolver.
-10. Reportería → Consolidado Regional.
-11. Laboratorio → offline + OCR.
+`src/utils/access.js` centraliza la lógica de scope y filtros.
+
+### 3. Búsqueda
+
+`src/components/PersonSearch.jsx` implementa el patrón reutilizable de búsqueda por identificación/nombre.
+
+No se recomienda volver a introducir selectores con universos completos de personas.
+
+### 4. Referencias
+
+`ReferencesPage.jsx` incluye:
+
+- captura manual;
+- búsqueda de persona;
+- detalle para cualquier motivo/factor seleccionado;
+- resumen final;
+- impresión;
+- flujo simulado de carga desde Excel estandarizado;
+- descarga de plantilla compatible con Excel.
+
+### 5. Sesiones / valoración
+
+`SessionsPage.jsx` mantiene los tres ámbitos de valoración:
+
+- Individual;
+- Hogar-Familiar;
+- Comunitario.
+
+Se eliminaron intensidad/frecuencia/persistencia obligatorias.
+
+Cada factor marcado puede recibir texto adicional.
+
+### 6. Casos
+
+`CasesPage.jsx` incluye:
+
+- búsqueda y filtros;
+- vista mínima para Establecimiento;
+- timeline;
+- plan;
+- Documentos;
+- Coordinaciones;
+- Traslado;
+- Reportes;
+- Cierre.
+
+Reportes y Cierre son acciones independientes.
+
+### 7. Traslados
+
+La OL origen cierra por traslado.
+
+La OL destino recibe un elemento `Pendiente de continuidad`. Al confirmarlo, se crea la continuidad del caso en la OL destino conservando el historial conceptual.
+
+El comportamiento exacto ante familias que no llegan sigue pendiente de validación.
+
+### 8. Atenciones
+
+`AttentionsPage.jsx` sustituye la antigua pantalla `InterventionsPage`.
+
+Incluye:
+
+- atención individual;
+- atención grupal una sola vez;
+- búsqueda de participantes;
+- asociación a historiales individuales.
+
+### 9. Programación
+
+Nueva `SchedulePage.jsx`.
+
+Estados:
+
+- Programada;
+- Realizada;
+- Reprogramada;
+- Cancelada.
+
+Reprogramar exige nueva fecha y motivo. Cancelar exige motivo.
+
+Regional/Nacional consultan sin editar.
+
+### 10. Reporterías
+
+`ReportingPage.jsx` agrega:
+
+- año;
+- filtros jerárquicos;
+- estado/prioridad;
+- disciplina/profesional;
+- casos por estado;
+- casos por prioridad;
+- personas únicas atendidas;
+- total de atenciones;
+- consolidado dinámico;
+- exportación compatible con Excel.
+
+### 11. Laboratorio
+
+`LabPage.jsx` deja explícitamente como experimental:
+
+- OCR;
+- offline/sincronización.
+
+Excel estandarizado se muestra como contingencia prioritaria.
+
+## Pendientes funcionales deliberados
+
+- flujo definitivo `tamizaje → A.I.`;
+- permisos exactos Regional/Nacional sobre detalle sensible;
+- nombre/estado final de continuidad por traslado;
+- tratamiento cuando una familia trasladada nunca llega;
+- estructura definitiva de reportes;
+- formato final de plantilla Excel;
+- OCR real;
+- sincronización offline real;
+- integración con SIDINACC/CAH.
+
+## Validación técnica realizada
+
+Se verificó sintaxis de todos los `.js/.jsx` con el parser/transpilador de TypeScript en modo JSX y se comprobó la resolución de imports relativos.
+
+La instalación de dependencias no se ejecutó en este entorno por falta de acceso a npm; por ello el build Vite debe verificarse localmente con `npm install && npm run build`.

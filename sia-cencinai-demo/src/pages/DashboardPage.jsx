@@ -1,82 +1,32 @@
 import React from 'react';
-import { AlertTriangle, ArrowRight, BookOpenCheck, ClipboardList, Clock3, FolderHeart, RefreshCcw, Users } from 'lucide-react';
-import { MetricCard, PageHeader, SectionCard, StatusBadge } from '../components/ui';
+import { AlertTriangle, ArrowRight, BookOpenCheck, CalendarDays, ClipboardList, FolderHeart, Users } from 'lucide-react';
+import { HELP_TEXT } from '../data/catalogs';
+import { roleConfig, scopeItems } from '../utils/access';
+import { HelpStrip, MetricCard, PageHeader, SectionCard, StatusBadge } from '../components/ui';
 
-export default function DashboardPage({ state, onNavigate }) {
-  const pendingReferences = state.references.filter((r) => ['Pendiente de revisión', 'Recibida'].includes(r.status)).length;
-  const activeCases = state.cases.filter((c) => c.status === 'Activo').length;
-  const nextSessions = state.sessions.filter((s) => s.status === 'Programada').length;
-  const qualityPending = state.qualitySubmissions.filter((q) => q.status !== 'Validado').length;
+export default function DashboardPage({state,role,onNavigate,actions}){
+  const cfg=roleConfig(role);
+  const people=scopeItems(state.people,role);
+  const refs=scopeItems(state.references,role);
+  const cases=scopeItems(state.cases,role);
+  const schedule=scopeItems(state.schedule,role);
+  const transfers=state.transfers.filter(t=>cfg.level==='local'&&t.destinationOffice===cfg.scope&&t.status==='Pendiente de continuidad');
+  const overdue=schedule.filter(s=>s.status==='Programada'&&s.date<'2026-09-16');
 
-  const urgentReferences = state.references.filter((r) => r.type === 'Urgencia' && r.status !== 'Admitida a A.I.');
-  const pendingSync = state.syncItems.filter((s) => s.status !== 'Sincronizado');
+  if(cfg.level==='establishment') return <div className="space-y-6"><PageHeader eyebrow="Establecimiento" title="Inicio" description="Acceso simplificado para referencia y consulta básica de personas asociadas a A.I."/><HelpStrip>{HELP_TEXT.dashboard}</HelpStrip>
+    <div className="grid sm:grid-cols-3 gap-3"><MetricCard label="Referencias" value={refs.length} helper="De este establecimiento" icon={ClipboardList} tone="blue" onClick={()=>onNavigate('references')}/><MetricCard label="Personas en A.I." value={people.filter(p=>cases.some(c=>c.personId===p.id)).length} helper="Lista informativa" icon={Users} tone="teal" onClick={()=>onNavigate('cases')}/><MetricCard label="Pendientes de captura" value={state.syncItems.filter(x=>x.status!=='Sincronizado').length} helper="Laboratorio / contingencia" icon={AlertTriangle} tone="amber" onClick={()=>onNavigate('lab')}/></div>
+    <SectionCard title="Acciones rápidas" description="El establecimiento no accede al detalle interno de los casos de A.I."><div className="flex gap-2 flex-wrap"><button onClick={()=>onNavigate('references',{newReference:true})} className="bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold">Nueva referencia</button><button onClick={()=>onNavigate('cases')} className="border px-4 py-2.5 rounded-xl text-sm font-semibold">Ver lista de A.I.</button></div></SectionCard></div>;
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow="Panel operativo"
-        title="Buenos días. ¿Qué requiere atención hoy?"
-        description="Vista de demostración para Oficina Local. Resume referencias, casos, sesiones, calidad y continuidad operativa."
-        actions={<button onClick={() => onNavigate('references')} className="bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2"><ClipboardList size={16} /> Nueva referencia</button>}
-      />
+  if(['regional','national'].includes(cfg.level)) return <div className="space-y-6"><PageHeader eyebrow={cfg.level==='regional'?'Nivel Regional':'Nivel Nacional'} title="Inicio" description="Vista de consulta y analítica. La operación del caso permanece en Oficina Local."/><HelpStrip>{HELP_TEXT.dashboard}</HelpStrip>
+    <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3"><MetricCard label="Personas visibles" value={people.length} icon={Users} tone="blue"/><MetricCard label="Casos activos" value={cases.filter(c=>c.status==='Activo').length} icon={FolderHeart} tone="teal"/><MetricCard label="Atenciones registradas" value={state.timeline.filter(t=>cases.some(c=>c.id===t.caseId)&&!['Sesión interdisciplinaria','Cierre','Traslado'].includes(t.type)).length} icon={Users} tone="purple"/><MetricCard label="Actividades programadas" value={schedule.filter(s=>s.status==='Programada').length} icon={CalendarDays} tone="amber" onClick={()=>onNavigate('schedule')}/></div>
+    <div className="grid lg:grid-cols-2 gap-5"><SectionCard title="Consulta analítica"><p className="text-sm text-stone-600">Use Reporterías para seleccionar año, ámbito institucional, estado, prioridad, disciplina y profesional.</p><button onClick={()=>onNavigate('reporting')} className="mt-4 text-sm font-semibold text-teal-700 flex items-center gap-1">Abrir reportería <ArrowRight size={14}/></button></SectionCard><SectionCard title="Programación"><p className="text-sm text-stone-600">Puede consultar la programación de las Oficinas Locales de su ámbito, sin modificarla.</p><button onClick={()=>onNavigate('schedule')} className="mt-4 text-sm font-semibold text-teal-700">Consultar programación</button></SectionCard></div></div>;
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
-        <MetricCard label="Referencias por revisar" value={pendingReferences} helper="Recibidas o pendientes" icon={ClipboardList} tone="amber" onClick={() => onNavigate('references')} />
-        <MetricCard label="Casos activos" value={activeCases} helper="Atención interdisciplinaria" icon={FolderHeart} tone="teal" onClick={() => onNavigate('cases')} />
-        <MetricCard label="Sesiones próximas" value={nextSessions} helper="Sesiones programadas" icon={BookOpenCheck} tone="purple" onClick={() => onNavigate('sessions')} />
-        <MetricCard label="Revisiones regionales" value={qualityPending} helper="Pendientes o devueltas" icon={AlertTriangle} tone="red" onClick={() => onNavigate('quality')} />
-      </div>
-
-      <div className="grid xl:grid-cols-3 gap-5">
-        <SectionCard title="Prioridad inmediata" description="Elementos que conviene revisar antes de continuar con el trabajo ordinario." className="xl:col-span-2">
-          <div className="space-y-3">
-            {urgentReferences.map((ref) => {
-              const person = state.people.find((p) => p.id === ref.personId);
-              return (
-                <button key={ref.id} onClick={() => onNavigate('references')} className="w-full text-left border border-red-100 bg-red-50/70 rounded-xl p-4 flex items-center gap-3 hover:border-red-200">
-                  <div className="w-9 h-9 rounded-xl bg-red-100 text-red-700 flex items-center justify-center"><AlertTriangle size={17} /></div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap"><strong className="text-sm text-stone-900">{person?.name}</strong><StatusBadge status="Urgencia" /></div>
-                    <p className="text-xs text-stone-600 mt-1">{ref.observations}</p>
-                  </div>
-                  <ArrowRight size={17} className="text-stone-400" />
-                </button>
-              );
-            })}
-            {urgentReferences.length === 0 && <p className="text-sm text-stone-500">No hay referencias urgentes pendientes en los datos de demostración.</p>}
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Continuidad operativa" description="Estado de captura y sincronización.">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between"><span className="text-sm text-stone-600 flex items-center gap-2"><RefreshCcw size={15} /> Pendientes de sincronizar</span><strong>{pendingSync.length}</strong></div>
-            <div className="flex items-center justify-between"><span className="text-sm text-stone-600 flex items-center gap-2"><Clock3 size={15} /> Conflictos</span><strong>{pendingSync.filter((s) => s.status === 'Conflicto').length}</strong></div>
-            <button onClick={() => onNavigate('lab')} className="w-full mt-2 border border-stone-200 hover:bg-stone-50 rounded-xl px-3 py-2 text-xs font-semibold text-stone-700">Abrir centro de sincronización</button>
-          </div>
-        </SectionCard>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-5">
-        <SectionCard title="Próxima sesión interdisciplinaria" description="La sesión puede analizar múltiples referencias sin duplicar datos.">
-          {state.sessions[0] ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between"><div><p className="font-semibold text-stone-900">{state.sessions[0].date} · {state.sessions[0].startTime}</p><p className="text-xs text-stone-500">{state.sessions[0].place}</p></div><StatusBadge status={state.sessions[0].status} /></div>
-              <p className="text-sm text-stone-600">{state.sessions[0].referenceIds.length} caso(s) incluidos · {state.sessions[0].participants.join(', ')}</p>
-              <button onClick={() => onNavigate('sessions')} className="text-sm font-semibold text-teal-700 flex items-center gap-1">Abrir sesión <ArrowRight size={14} /></button>
-            </div>
-          ) : <p className="text-sm text-stone-500">No hay sesiones programadas.</p>}
-        </SectionCard>
-
-        <SectionCard title="Atenciones recientes" description="Vista combinada de intervenciones individuales y grupales.">
-          <div className="space-y-3">
-            {state.timeline.slice(0, 3).map((item) => {
-              const c = state.cases.find((x) => x.id === item.caseId);
-              const p = state.people.find((x) => x.id === c?.personId);
-              return <div key={item.id} className="flex gap-3"><div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center flex-shrink-0"><Users size={15} /></div><div><p className="text-sm font-medium text-stone-800">{item.title}</p><p className="text-xs text-stone-500">{p?.name} · {item.date} · {item.discipline}</p></div></div>;
-            })}
-          </div>
-        </SectionCard>
-      </div>
-    </div>
-  );
+  const pendingRefs=refs.filter(r=>['Pendiente de revisión','Recibida'].includes(r.status));
+  const active=cases.filter(c=>c.status==='Activo');
+  const nextSessions=state.sessions.filter(s=>s.status==='Programada');
+  return <div className="space-y-6"><PageHeader eyebrow="Oficina Local" title="Buenos días. ¿Qué requiere atención hoy?" description="Panel operativo del equipo de Atención Interdisciplinaria." actions={<button onClick={()=>onNavigate('references')} className="bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"><ClipboardList size={16}/> Referencias</button>}/><HelpStrip>{HELP_TEXT.dashboard}</HelpStrip>
+    <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-3"><MetricCard label="Referencias nuevas" value={pendingRefs.length} icon={ClipboardList} tone="amber" onClick={()=>onNavigate('references')}/><MetricCard label="Casos activos" value={active.length} icon={FolderHeart} tone="teal" onClick={()=>onNavigate('cases')}/><MetricCard label="Sesiones próximas" value={nextSessions.length} icon={BookOpenCheck} tone="purple" onClick={()=>onNavigate('sessions')}/><MetricCard label="Ingresos por traslado" value={transfers.length} icon={ArrowRight} tone="blue" onClick={()=>onNavigate('cases',{transferPending:true})}/><MetricCard label="Programación vencida" value={overdue.length} icon={CalendarDays} tone="red" onClick={()=>onNavigate('schedule')}/></div>
+    {overdue.length>0&&<SectionCard title="Notificaciones"><div className="space-y-2">{overdue.map(x=><button key={x.id} onClick={()=>onNavigate('schedule')} className="w-full text-left border border-amber-200 bg-amber-50 rounded-xl p-3"><div className="flex justify-between gap-3"><div><p className="text-sm font-semibold">{x.title}</p><p className="text-xs text-stone-600">Programada para {x.date}. Actualice si fue realizada, reprogramada o cancelada.</p></div><StatusBadge status={x.status}/></div></button>)}</div></SectionCard>}
+    <div className="grid lg:grid-cols-2 gap-5"><SectionCard title="Referencias por revisar" description="Las referencias creadas desde establecimientos llegan a esta bandeja."><div className="space-y-2">{pendingRefs.slice(0,4).map(r=>{const p=state.people.find(x=>x.id===r.personId);return <button key={r.id} onClick={()=>onNavigate('references',{referenceId:r.id})} className="w-full border rounded-xl p-3 text-left hover:border-teal-300"><div className="flex justify-between"><div><p className="text-sm font-semibold">{p?.name}</p><p className="text-xs text-stone-500">{r.establishment} · {r.referredBy}</p></div><StatusBadge status={r.type}/></div></button>})}</div></SectionCard><SectionCard title="Próximas acciones"><div className="space-y-2">{active.filter(c=>c.nextAction).map(c=>{const p=state.people.find(x=>x.id===c.personId);return <button key={c.id} onClick={()=>onNavigate('cases',{caseId:c.id})} className="w-full text-left border rounded-xl p-3"><p className="text-sm font-semibold">{p?.name}</p><p className="text-xs text-stone-500">{c.nextAction} · {c.nextActionDate}</p></button>})}</div></SectionCard></div>
+  </div>;
 }

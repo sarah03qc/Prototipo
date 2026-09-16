@@ -1,51 +1,45 @@
-# SIA-CENCINAI — Prototipo navegable de Atención Interdisciplinaria
+# SIA-CENCINAI — Prototipo navegable v3
 
-Segunda iteración del prototipo del **Sistema de apoyo a la Atención Interdisciplinaria (SIA-CENCINAI)**.
+Prototipo de validación funcional para el módulo de **Atención Interdisciplinaria** de CEN-CINAI.
 
-Esta versión está orientada a **validación rápida con stakeholders**. No pretende representar todavía una implementación productiva ni sustituir SIDINACC.
+Esta iteración incorpora los hallazgos de la validación del prototipo realizada el **16 de septiembre de 2026** y busca acercar la experiencia a un flujo operativo real antes de iniciar una implementación productiva.
 
-## Objetivos de esta iteración
+## Objetivo
 
-- Convertir historias de usuario y requerimientos en pantallas navegables.
-- Validar flujo, terminología, variables y experiencia de usuario.
-- Demostrar cómo reducir redigitación y fragmentación documental.
-- Mostrar registro individual y grupal.
-- Mostrar reportería y control de calidad Regional.
-- Simular trabajo offline y captura asistida por OCR.
+Validar con stakeholders:
 
-## Alcance de prototipo
+- funciones por rol;
+- búsqueda y filtros;
+- referencia a A.I.;
+- sesión y valoración interdisciplinaria;
+- gestión del caso;
+- atenciones individuales y grupales;
+- traslado;
+- programación;
+- reportería;
+- mecanismos alternativos de captura.
 
-### Navegable / interactivo
+Los datos incluidos son **100% sintéticos**.
 
-- Dashboard operativo.
-- Personas y búsqueda.
-- Referencias de A.I.
-- Sesiones interdisciplinarias.
-- Valoración situacional.
-- Casos de A.I.
-- Atenciones individuales.
-- Intervenciones grupales multi-participante.
-- Historial longitudinal.
-- Hub documental.
-- Reportería.
-- Control de calidad.
-- Consolidado Regional.
-- Simulación offline.
-- Simulación OCR con revisión humana.
+## Cambios principales de v3
 
-### Simulado / no productivo
-
-- Autenticación.
-- Integraciones con SIDINACC/SINIRUBE.
-- Persistencia de backend.
-- OCR real.
-- Sincronización offline real.
-- Firma electrónica.
-- Exportaciones institucionales.
-
-## Datos
-
-Todos los datos incluidos son **sintéticos y ficticios**.
+- Se elimina el módulo de **Control de calidad Regional** y el workflow validar/devolver/corregir.
+- Se agrega el rol **Establecimiento** con acceso limitado.
+- La navegación cambia según el nivel institucional.
+- Personas/casos se buscan por **identificación** o nombre; se evitan dropdowns masivos.
+- Se agregan filtros jerárquicos por ámbito.
+- `Intervenciones` pasa a llamarse **Atenciones**.
+- `Instrumentos` pasa a llamarse **Documentos**.
+- `Reportes` y `Cierre` quedan separados.
+- Se simplifica la valoración situacional eliminando intensidad/frecuencia/persistencia obligatorias.
+- Todo factor seleccionado puede recibir una **especificación adicional**.
+- Se refina el traslado: cierre por traslado en origen + ingreso pendiente de continuidad en destino.
+- Se agrega **Programación** de sesiones y atenciones.
+- La reportería incorpora año, filtros jerárquicos y diferencia personas únicas vs total de atenciones.
+- Las consolidaciones se generan dinámicamente según filtros; no se “remiten” internamente.
+- Se agrega exportación compatible con Excel de personas/casos/consolidado.
+- Se prioriza **Excel estandarizado** como contingencia de captura.
+- OCR y offline avanzado permanecen en **Laboratorio** como experimentales.
 
 ## Ejecutar
 
@@ -54,45 +48,50 @@ npm install
 npm run dev
 ```
 
-Abrir la URL indicada por Vite, normalmente `http://localhost:5173`.
+Para validar una compilación:
 
-## Estructura
-
-```text
-src/
-├── components/
-│   ├── AppShell.jsx
-│   └── ui.jsx
-├── data/
-│   ├── catalogs.js
-│   └── mockData.js
-├── hooks/
-│   └── usePrototypeStore.js
-├── pages/
-│   ├── DashboardPage.jsx
-│   ├── PeoplePage.jsx
-│   ├── ReferencesPage.jsx
-│   ├── SessionsPage.jsx
-│   ├── CasesPage.jsx
-│   ├── InterventionsPage.jsx
-│   ├── ReportingPage.jsx
-│   ├── QualityPage.jsx
-│   └── LabPage.jsx
-├── App.jsx
-├── index.css
-└── main.jsx
+```bash
+npm run build
 ```
 
-## Notas funcionales
+## Roles de demostración
 
-- La prioridad `Urgencia / Alto / Moderado / Bajo` corresponde al modelo objetivo del borrador 2026 y debe mantenerse configurable.
-- Las variables de valoración situacional se basan en los ámbitos Individual, Hogar-Familiar y Comunitario documentados en los anexos del proyecto.
-- El OCR se presenta bajo el principio **extraer → precargar → revisar → confirmar**.
-- Una intervención grupal se registra una sola vez y se relaciona con múltiples participantes.
-- El Consolidado Regional se representa como producto documental posterior al control de calidad y anterior al análisis/socialización Regional.
+- Profesional / Asistente 3 — Establecimiento
+- Profesional EE.II. — Oficina Local
+- Jefatura — Oficina Local
+- ATE / Dirección Regional
+- UIVCD / UNAT — Nivel Nacional
 
-## Metodología prevista
+## Navegación principal por rol
 
-```text
-Prototipo → revisión con stakeholders → feedback → refinamiento de HU/RF → nueva iteración
-```
+### Establecimiento
+
+- Inicio
+- Personas
+- Referencias
+- Lista de A.I.
+- Laboratorio
+
+### Oficina Local
+
+- Inicio
+- Personas
+- Referencias
+- Casos de A.I.
+- Sesiones interdisciplinarias
+- Atenciones
+- Programación
+- Reportería
+- Laboratorio
+
+### Regional / Nacional
+
+- Inicio
+- Personas
+- Casos de A.I.
+- Programación
+- Reportería
+
+## Nota de alcance
+
+Este proyecto sigue siendo un **prototipo de validación**, no un sistema productivo. SIDINACC/CAH, OCR real, sincronización offline, autenticación institucional, permisos definitivos y persistencia backend todavía no se implementan.

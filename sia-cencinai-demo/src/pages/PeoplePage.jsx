@@ -1,90 +1,22 @@
-import React, { useMemo, useState } from 'react';
-import { ChevronRight, Search, UserRound, Users } from 'lucide-react';
-import { Badge, PageHeader, PriorityBadge, SectionCard, SourceBadge, StatusBadge, TimelineDot, inputClass } from '../components/ui';
+import React,{useMemo,useState} from 'react';
+import { Download, Search, UserRound } from 'lucide-react';
+import { HELP_TEXT } from '../data/catalogs';
+import { roleConfig, scopeItems } from '../utils/access';
+import { downloadExcelLike } from '../utils/download';
+import { Badge, HelpStrip, PageHeader, SectionCard, SourceBadge, StatusBadge, Tabs, TimelineDot, inputClass } from '../components/ui';
 
-function ageFromBirthDate(birthDate) {
-  const birth = new Date(`${birthDate}T00:00:00`);
-  const now = new Date('2026-09-15T00:00:00');
-  let years = now.getFullYear() - birth.getFullYear();
-  if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) years -= 1;
-  return `${years} años`;
-}
+function age(birthDate){const b=new Date(`${birthDate}T00:00:00`),n=new Date('2026-09-16T00:00:00');let y=n.getFullYear()-b.getFullYear();if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))y--;return `${y} años`;}
 
-export default function PeoplePage({ state, onNavigate }) {
-  const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState(state.people[0]?.id);
-  const [tab, setTab] = useState('summary');
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return state.people;
-    return state.people.filter((p) => [p.name, p.identification, p.establishment].some((v) => v.toLowerCase().includes(q)));
-  }, [query, state.people]);
-
-  const selected = state.people.find((p) => p.id === selectedId) || filtered[0];
-  const cases = state.cases.filter((c) => c.personId === selected?.id);
-  const currentCase = cases.find((c) => c.status !== 'Cerrado') || cases[0];
-  const timeline = currentCase ? state.timeline.filter((t) => t.caseId === currentCase.id).sort((a, b) => b.date.localeCompare(a.date)) : [];
-
-  return (
-    <div className="space-y-6">
-      <PageHeader eyebrow="Identidad y expediente lógico" title="Personas" description="Buscar primero, reutilizar datos maestros y evitar crear identidades duplicadas." />
-
-      <div className="grid xl:grid-cols-[360px_1fr] gap-5 items-start">
-        <SectionCard title="Buscar persona" description="La identificación es la llave preferente cuando está disponible.">
-          <div className="relative mb-4">
-            <Search size={16} className="absolute left-3 top-3 text-stone-400" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} className={`${inputClass} pl-9`} placeholder="Cédula, nombre o establecimiento" />
-          </div>
-          <div className="space-y-2 max-h-[620px] overflow-y-auto pr-1">
-            {filtered.map((p) => (
-              <button key={p.id} onClick={() => { setSelectedId(p.id); setTab('summary'); }} className={`w-full text-left rounded-xl border p-3 transition-all ${selected?.id === p.id ? 'border-teal-300 bg-teal-50/60' : 'border-stone-200 hover:bg-stone-50'}`}>
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center"><UserRound size={16} className="text-stone-500" /></div>
-                  <div className="min-w-0 flex-1"><p className="text-sm font-semibold truncate">{p.name}</p><p className="text-xs font-mono text-stone-500">{p.identification}</p><p className="text-xs text-stone-400 mt-1 truncate">{p.establishment}</p></div>
-                  <ChevronRight size={15} className="text-stone-300 mt-1" />
-                </div>
-              </button>
-            ))}
-          </div>
-        </SectionCard>
-
-        {selected && (
-          <div className="space-y-5">
-            <section className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
-              <div className="p-5 bg-gradient-to-r from-teal-800 to-teal-700 text-white">
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div><p className="text-xs text-teal-100 font-medium">Persona usuaria · datos ficticios</p><h3 className="text-xl font-bold mt-1">{selected.name}</h3><p className="text-sm font-mono text-teal-100 mt-1">{selected.identification}</p></div>
-                  <div className="flex gap-2 flex-wrap"><Badge tone="green">Servicio {selected.serviceStatus}</Badge><StatusBadge status={selected.caseStatus} /></div>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                  <div><p className="text-xs text-stone-400">Fecha de nacimiento</p><p className="font-semibold mt-1">{selected.birthDate}</p></div>
-                  <div><p className="text-xs text-stone-400">Edad calculada</p><p className="font-semibold mt-1">{ageFromBirthDate(selected.birthDate)}</p></div>
-                  <div><p className="text-xs text-stone-400">Establecimiento</p><p className="font-semibold mt-1">{selected.establishment}</p></div>
-                  <div><p className="text-xs text-stone-400">Modalidad(es)</p><p className="font-semibold mt-1">{selected.modalities.join(' + ')}</p></div>
-                </div>
-                <div className="mt-4"><SourceBadge source={selected.source} /></div>
-              </div>
-            </section>
-
-            <div className="flex gap-1 border-b border-stone-200 overflow-x-auto">
-              {[['summary', 'Resumen'], ['surveillance', 'Vigilancia'], ['cases', 'Casos A.I.'], ['history', 'Historial'], ['documents', 'Documentos']].map(([id, label]) => <button key={id} onClick={() => setTab(id)} className={`px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap ${tab === id ? 'border-teal-700 text-teal-800' : 'border-transparent text-stone-500'}`}>{label}</button>)}
-            </div>
-
-            {tab === 'summary' && <SectionCard title="Resumen operativo"><div className="grid md:grid-cols-2 gap-4"><div className="border border-stone-200 rounded-xl p-4"><p className="text-xs text-stone-400">Oficina Local / Región</p><p className="text-sm font-semibold mt-1">{selected.localOffice}</p><p className="text-xs text-stone-500">{selected.region}</p></div><div className="border border-stone-200 rounded-xl p-4"><p className="text-xs text-stone-400">Caso de A.I.</p>{currentCase ? <div className="mt-2 flex gap-2 items-center"><strong className="text-sm">{currentCase.id}</strong><PriorityBadge priority={currentCase.priority} /><StatusBadge status={currentCase.status} /></div> : <p className="text-sm text-stone-500 mt-2">No existe caso de A.I. activo.</p>}</div></div></SectionCard>}
-
-            {tab === 'surveillance' && <SectionCard title="Vigilancia disponible" description="El prototipo referencia información de vigilancia; no obliga a redigitarla como parte de una atención."><div className="grid md:grid-cols-3 gap-3">{[['Crecimiento', 'Peso, talla, clasificación nutricional y circunferencias cuando corresponda.'], ['Desarrollo', 'EDIN II / EVADE según edad y lineamientos.'], ['Salud', 'Visión, audición, salud oral, lenguaje, motricidad y variables de salud.']].map(([t, d]) => <div key={t} className="border border-stone-200 rounded-xl p-4"><p className="font-semibold text-sm">{t}</p><p className="text-xs text-stone-500 mt-1">{d}</p><Badge tone="blue" className="mt-3">Dato referenciado</Badge></div>)}</div></SectionCard>}
-
-            {tab === 'cases' && <SectionCard title="Casos de Atención Interdisciplinaria">{cases.length ? <div className="space-y-3">{cases.map((c) => <button key={c.id} onClick={() => onNavigate('cases', c.id)} className="w-full border border-stone-200 rounded-xl p-4 flex justify-between items-center hover:border-teal-300 text-left"><div><p className="font-semibold text-sm">{c.id}</p><p className="text-xs text-stone-500 mt-1">Apertura: {c.openedAt}</p></div><div className="flex gap-2"><PriorityBadge priority={c.priority} /><StatusBadge status={c.status} /></div></button>)}</div> : <p className="text-sm text-stone-500">Sin casos registrados.</p>}</SectionCard>}
-
-            {tab === 'history' && <SectionCard title="Historial longitudinal" description="Integra atenciones individuales y grupales en una sola línea de tiempo.">{timeline.length ? <div className="space-y-0">{timeline.map((e, idx) => <div key={e.id} className="relative flex gap-4 pb-5"><div className="flex flex-col items-center"><TimelineDot type={e.type} />{idx < timeline.length - 1 && <div className="w-px flex-1 bg-stone-200 mt-1" />}</div><div className="-mt-1"><div className="flex items-center gap-2 flex-wrap"><p className="text-sm font-semibold">{e.title}</p><Badge tone="neutral">{e.type}</Badge></div><p className="text-xs text-stone-500 mt-1">{e.date} · {e.discipline}</p><p className="text-sm text-stone-600 mt-2">{e.detail}</p></div></div>)}</div> : <p className="text-sm text-stone-500">Sin intervenciones registradas.</p>}</SectionCard>}
-
-            {tab === 'documents' && <SectionCard title="Documentos relacionados"><div className="grid md:grid-cols-2 gap-3">{['Referencia A.I.', 'Valoración Situacional', 'Minuta', 'Hoja de Atención', 'Hoja de Seguimiento', 'Reporte A.I.'].map((d) => <div key={d} className="border border-stone-200 rounded-xl p-3 flex items-center gap-3"><div className="w-8 h-8 bg-violet-50 text-violet-700 rounded-lg flex items-center justify-center"><Users size={14} /></div><div><p className="text-sm font-medium">{d}</p><p className="text-xs text-stone-400">Relacionado al caso / prototipo</p></div></div>)}</div></SectionCard>}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+export default function PeoplePage({state,role,context,onNavigate}){
+  const cfg=roleConfig(role); const scoped=scopeItems(state.people,role);
+  const [query,setQuery]=useState(context?.query||''); const [selectedId,setSelectedId]=useState(null); const [tab,setTab]=useState('summary');
+  const filtered=useMemo(()=>{const q=query.trim().toLowerCase();return !q?scoped:scoped.filter(p=>p.name.toLowerCase().includes(q)||p.identification.toLowerCase().includes(q));},[query,scoped]);
+  const selected=state.people.find(p=>p.id===selectedId); const cases=selected?state.cases.filter(c=>c.personId===selected.id):[]; const current=cases.find(c=>c.status==='Activo')||cases[0]; const events=current?state.timeline.filter(t=>t.caseId===current.id).sort((a,b)=>b.date.localeCompare(a.date)):[];
+  const exportRows=filtered.map(p=>[p.identification,p.name,p.establishment,p.localOffice,p.region]);
+  return <div className="space-y-6"><PageHeader eyebrow="Identidad y búsqueda" title="Personas" description="La identificación es el criterio principal de búsqueda; el nombre funciona como alternativa." actions={cfg.level!=='establishment'&&<button onClick={()=>downloadExcelLike('personas_filtradas',['Identificación','Nombre','Establecimiento','Oficina Local','Región'],exportRows)} className="border px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-2"><Download size={15}/> Exportar Excel</button>}/><HelpStrip>{HELP_TEXT.people}</HelpStrip>
+    <div className="grid xl:grid-cols-[420px_1fr] gap-5 items-start"><SectionCard title="Buscar persona" description={`${filtered.length} resultado(s) dentro de su ámbito.`}><div className="relative"><Search size={16} className="absolute left-3 top-3 text-stone-400"/><input autoFocus value={query} onChange={e=>setQuery(e.target.value)} className={`${inputClass} pl-9`} placeholder="Identificación o nombre"/></div><div className="space-y-2 mt-4 max-h-[650px] overflow-y-auto">{filtered.map(p=><button key={p.id} onClick={()=>{setSelectedId(p.id);setTab('summary')}} className={`w-full text-left border rounded-xl p-3 ${selectedId===p.id?'border-teal-300 bg-teal-50':'hover:bg-stone-50'}`}><div className="flex gap-3"><div className="w-9 h-9 bg-stone-100 rounded-xl flex items-center justify-center"><UserRound size={16}/></div><div className="min-w-0"><p className="text-sm font-semibold truncate">{p.name}</p><p className="text-xs font-mono text-stone-500">{p.identification}</p><p className="text-xs text-stone-400 truncate">{p.establishment}</p></div></div></button>)}</div></SectionCard>
+    <div>{!selected?<SectionCard><p className="text-sm text-stone-500 text-center py-16">Busque y seleccione una persona para consultar su información.</p></SectionCard>:<div className="space-y-4"><SectionCard><div className="flex justify-between gap-4 flex-wrap"><div><p className="text-xl font-bold">{selected.name}</p><p className="text-sm text-stone-500 mt-1">{selected.identification} · {age(selected.birthDate)}</p><p className="text-xs text-stone-500 mt-1">{selected.establishment} · {selected.localOffice}</p></div><div className="flex gap-2 items-start"><SourceBadge source={selected.source}/>{current&&<StatusBadge status={current.status}/>}</div></div></SectionCard>
+      {cfg.level==='establishment'?<SectionCard title="Información disponible para establecimiento" description="La vista se limita a información mínima de A.I. para proteger el detalle interno del caso."><div className="grid sm:grid-cols-3 gap-3">{cases.length?cases.map(c=><div key={c.id} className="border rounded-xl p-3"><p className="text-xs text-stone-400">Caso</p><p className="text-sm font-semibold mt-1">{c.id}</p><div className="mt-2"><StatusBadge status={c.status}/></div><p className="text-xs text-stone-500 mt-2">Apertura: {c.openedAt}</p>{c.closedAt&&<p className="text-xs text-stone-500">Cierre: {c.closedAt}</p>}</div>):<p className="text-sm text-stone-500">Sin caso A.I. registrado.</p>}</div></SectionCard>:
+      <SectionCard><Tabs value={tab} onChange={setTab} items={[{id:'summary',label:'Resumen'},{id:'cases',label:'Casos A.I.'},{id:'history',label:'Historial'}]}/><div className="pt-5">{tab==='summary'&&<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[['Fecha de nacimiento',selected.birthDate],['Sexo',selected.sex],['Modalidades',selected.modalities.join(', ')],['Establecimiento',selected.establishment],['Oficina Local',selected.localOffice],['Región',selected.region]].map(([k,v])=><div key={k} className="border rounded-xl p-3"><p className="text-xs text-stone-400">{k}</p><p className="text-sm font-semibold mt-1">{v}</p></div>)}</div>}{tab==='cases'&&<div className="space-y-2">{cases.map(c=><button key={c.id} onClick={()=>onNavigate('cases',{caseId:c.id})} className="w-full text-left border rounded-xl p-3 flex justify-between"><div><p className="text-sm font-semibold">{c.id}</p><p className="text-xs text-stone-500">Apertura {c.openedAt}</p></div><StatusBadge status={c.status}/></button>)}</div>}{tab==='history'&&<div className="space-y-0">{events.map((e,i)=><div key={e.id} className="flex gap-3"><div className="flex flex-col items-center"><TimelineDot type={e.type}/>{i<events.length-1&&<span className="w-px bg-stone-200 flex-1 min-h-12"/>}</div><div className="pb-5"><p className="text-sm font-semibold">{e.title}</p><p className="text-xs text-stone-500">{e.date} · {e.discipline}</p><p className="text-xs text-stone-600 mt-1">{e.detail}</p></div></div>)}</div>}</div></SectionCard>}</div>}</div></div>
+  </div>;
 }
