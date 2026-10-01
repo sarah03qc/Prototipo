@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { demoCases,demoCoordinations,demoDocuments,demoGroupAttentions,demoOcr,demoPeople,demoReferences,demoReports,demoSchedule,demoSessions,demoSyncItems,demoTimeline,demoTransfers } from '../data/mockData';
 
-const STORAGE_KEY='sia-cencinai-prototype-v3';
+const STORAGE_KEY='sia-cencinai-prototype-v3-1';
 const today='2026-09-16';
 const initialState={people:demoPeople,references:demoReferences,cases:demoCases,sessions:demoSessions,timeline:demoTimeline,groupAttentions:demoGroupAttentions,documents:demoDocuments,coordinations:demoCoordinations,reports:demoReports,schedule:demoSchedule,transfers:demoTransfers,syncItems:demoSyncItems,ocr:demoOcr,connection:'online'};
 

@@ -11,14 +11,14 @@ export function ExternalCoordinationPanel({ person }) {
 
   return (
     <div className="grid xl:grid-cols-2 gap-5">
-      <SectionCard title="Referencia interinstitucional" description="La persona se refiere a una institución/red; no se modela como referencia directa a una especialidad médica.">
+      <SectionCard title="Referencia interinstitucional" description="El cliente/beneficiaria se refiere a una institución/red; no se modela como referencia directa a una especialidad médica.">
         <div className="space-y-4">
           <Field label="Institución destino">
             <select value={institution} onChange={(e) => setInstitution(e.target.value)} className={inputClass}>
               {EXTERNAL_INSTITUTIONS.map((i) => <option key={i}>{i}</option>)}
             </select>
           </Field>
-          <Field label="Persona referida"><input readOnly value={`${person?.name || ''} · ${person?.identification || ''}`} className={`${inputClass} bg-stone-50`} /></Field>
+          <Field label="Cliente/beneficiaria referido"><input readOnly value={`${person?.name || ''} · ${person?.identification || ''}`} className={`${inputClass} bg-stone-50`} /></Field>
           <Field label="Motivo"><textarea rows={4} value={reason} onChange={(e) => setReason(e.target.value)} className={inputClass} /></Field>
           <div className="grid sm:grid-cols-2 gap-3">
             <Field label="Profesional OL responsable"><input defaultValue="Ana Morales — Psicología" className={inputClass} /></Field>

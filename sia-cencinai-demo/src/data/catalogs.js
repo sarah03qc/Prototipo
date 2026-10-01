@@ -54,10 +54,10 @@ export const SCHEDULE_STATUSES = ['Programada', 'Realizada', 'Reprogramada', 'Ca
 
 export const HELP_TEXT = {
   dashboard: 'Consulte los pendientes y accesos rápidos correspondientes a su nivel de trabajo.',
-  people: 'Busque principalmente por identificación. El nombre funciona como criterio secundario.',
+  people: 'Consulte clientes/beneficiarias dentro de su ámbito institucional, tengan o no un caso A.I. Use identificación o nombre y los filtros territoriales para localizar registros.',
   references: 'Registre y consulte referencias a Atención Interdisciplinaria evitando redigitar información existente.',
   cases: 'Consulte los casos de A.I. dentro de su ámbito. Los filtros ayudan a priorizar y planificar el trabajo.',
-  sessions: 'Organice sesiones con múltiples casos y documente la valoración interdisciplinaria de cada persona.',
+  sessions: 'Organice sesiones con múltiples casos y documente la valoración interdisciplinaria de cada cliente/beneficiaria.',
   attentions: 'Registre atenciones individuales o grupales. Una atención grupal se registra una sola vez.',
   schedule: 'Planifique sesiones y atenciones. Regional y Nacional pueden consultar la programación sin modificarla.',
   reporting: 'Aplique primero los filtros; todas las visualizaciones y consolidaciones responden al mismo corte.',

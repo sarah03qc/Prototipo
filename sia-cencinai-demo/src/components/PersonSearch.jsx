@@ -3,7 +3,7 @@ import { Search, UserRound, X } from 'lucide-react';
 import { scopeItems } from '../utils/access';
 import { inputClass } from './ui';
 
-export default function PersonSearch({ people, role, value, onSelect, label = 'Buscar persona', placeholder = 'Identificación o nombre', compact = false }) {
+export default function PersonSearch({ people, role, value, onSelect, label = 'Buscar cliente/beneficiaria', placeholder = 'Identificación o nombre', compact = false }) {
   const [query, setQuery] = useState('');
   const scoped = useMemo(() => scopeItems(people, role), [people, role]);
   const selected = people.find((p) => p.id === value);
