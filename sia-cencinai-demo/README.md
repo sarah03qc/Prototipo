@@ -95,3 +95,16 @@ npm run build
 ## Nota de alcance
 
 Este proyecto sigue siendo un **prototipo de validación**, no un sistema productivo. SIDINACC/CAH, OCR real, sincronización offline, autenticación institucional, permisos definitivos y persistencia backend todavía no se implementan.
+
+
+## Asistente experimental con Gemini
+
+El prototipo incluye una pestaña **Asistente** conectada a Google Gemini mediante un pequeño servidor local. La clave nunca se expone al navegador.
+
+1. Copie `.env.example` como `.env`.
+2. Coloque su clave de Google AI Studio en `GEMINI_API_KEY`.
+3. Ejecute `npm install`.
+4. Ejecute `npm run dev`.
+5. Abra la URL de Vite y seleccione **Asistente**.
+
+El frontend usa `/api/chat`; Vite redirige esa ruta al servidor local en el puerto `3001`. El asistente recibe únicamente datos sintéticos del ámbito visible para el rol seleccionado.

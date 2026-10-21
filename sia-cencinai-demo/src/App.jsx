@@ -9,6 +9,7 @@ import CasesPage from './pages/CasesPage';
 import AttentionsPage from './pages/AttentionsPage';
 import SchedulePage from './pages/SchedulePage';
 import ReportingPage from './pages/ReportingPage';
+import AssistantPage from './pages/AssistantPage';
 import LabPage from './pages/LabPage';
 import { roleConfig } from './utils/access';
 
@@ -19,7 +20,7 @@ export default function App(){
   const [context,setContext]=useState({});
   const navigate=(view,payload={})=>{setActiveView(view);setContext(payload||{});window.scrollTo({top:0,behavior:'smooth'})};
   const props={state,actions,role,onNavigate:navigate,context};
-  const pages={dashboard:<DashboardPage {...props}/>,people:<PeoplePage {...props}/>,references:<ReferencesPage {...props}/>,sessions:<SessionsPage {...props}/>,cases:<CasesPage {...props}/>,attentions:<AttentionsPage {...props}/>,schedule:<SchedulePage {...props}/>,reporting:<ReportingPage {...props}/>,lab:<LabPage {...props}/>};
+  const pages={dashboard:<DashboardPage {...props}/>,people:<PeoplePage {...props}/>,references:<ReferencesPage {...props}/>,sessions:<SessionsPage {...props}/>,cases:<CasesPage {...props}/>,attentions:<AttentionsPage {...props}/>,schedule:<SchedulePage {...props}/>,reporting:<ReportingPage {...props}/>,assistant:<AssistantPage {...props}/>,lab:<LabPage {...props}/>};
   const pendingSync=state.syncItems.filter(s=>s.status!=='Sincronizado').length;
   const cfg=roleConfig(role);
   const overdue=cfg.level==='local'?state.schedule.filter(s=>s.localOffice===cfg.scope&&s.status==='Programada'&&s.date<'2026-09-16').length:0;

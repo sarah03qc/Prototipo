@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, BarChart3, Bell, BookOpenCheck, CalendarDays, ClipboardList, FlaskConical, FolderHeart, Home, Menu, RefreshCw, Search, Settings2, Users } from 'lucide-react';
+import { Activity, BarChart3, Bell, Bot, BookOpenCheck, CalendarDays, ClipboardList, FlaskConical, FolderHeart, Home, Menu, RefreshCw, Search, Settings2, Users } from 'lucide-react';
 import { ROLES } from '../data/catalogs';
 import { roleConfig } from '../utils/access';
 import { ConnectionBadge } from './ui';
@@ -13,6 +13,7 @@ const NAV = [
   {id:'attentions',label:'Atenciones',icon:Activity,levels:['local']},
   {id:'schedule',label:'Programación',icon:CalendarDays,levels:['local','regional','national']},
   {id:'reporting',label:'Reportería',icon:BarChart3,levels:['local','regional','national']},
+  {id:'assistant',label:'Asistente',icon:Bot,levels:['establishment','local','regional','national']},
   {id:'lab',label:'Laboratorio',icon:FlaskConical,levels:['establishment','local']},
 ];
 
@@ -39,7 +40,7 @@ export default function AppShell({activeView,onNavigate,role,onRoleChange,connec
           <form onSubmit={submit} className="hidden md:flex flex-1 max-w-xl items-center gap-2 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2"><Search size={15} className="text-stone-400"/><input value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent outline-none text-xs flex-1" placeholder="Buscar cliente/beneficiaria por identificación o nombre..."/></form>
           <div className="ml-auto flex items-center gap-2 flex-wrap justify-end">{current.level==='local'&&<button onClick={()=>onNavigate('schedule')} className="relative w-9 h-9 rounded-xl border border-stone-200 flex items-center justify-center text-stone-600 hover:bg-stone-50" title="Notificaciones"><Bell size={16}/>{alertCount>0&&<span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-600 text-white text-[9px] flex items-center justify-center">{alertCount}</span>}</button>}<button onClick={onToggleConnection} className="hidden sm:block"><ConnectionBadge connection={connection} pending={pendingSync}/></button><div className="relative"><Settings2 size={14} className="absolute left-2.5 top-2.5 text-stone-400 pointer-events-none"/><select value={role} onChange={e=>onRoleChange(e.target.value)} className="pl-8 pr-8 py-2 rounded-xl border border-stone-200 bg-white text-xs font-medium max-w-[285px]">{ROLES.map(r=><option key={r.id} value={r.id}>{r.label}</option>)}</select></div></div>
         </div>
-        <div className="px-4 md:px-6 pb-2 text-[11px] text-stone-400">Simulación del ambiente: <b className="text-stone-600">{current.scope}</b> · Nivel: <b className="text-stone-600">{levelLabel}</b> · Rol: <b className="text-stone-600">{roleLabel}</b></div>
+        <div className="px-4 md:px-6 pb-2 text-[11px] text-stone-400">Ámbito: <b className="text-stone-600">{current.scope}</b> · Nivel: <b className="text-stone-600">{levelLabel}</b> · Rol: <b className="text-stone-600">{roleLabel}</b></div>
       </header>
       <main className="p-4 md:p-6 xl:p-8 max-w-[1500px] mx-auto">{children}</main>
     </div>

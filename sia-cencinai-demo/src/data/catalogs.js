@@ -51,15 +51,3 @@ export const RISK_MATRIX = {
 export const EXTERNAL_INSTITUTIONS = ['CCSS', 'MEP', 'PANI', 'INAMU', 'INA', 'IAFA', 'IMAS', 'MTSS', 'OAPVD', 'Otra'];
 export const SCHEDULE_TYPES = ['Sesión interdisciplinaria', 'Sesión de trabajo del EE.II.', 'Atención por establecimiento', 'Visita domiciliar', 'Otra atención'];
 export const SCHEDULE_STATUSES = ['Programada', 'Realizada', 'Reprogramada', 'Cancelada'];
-
-export const HELP_TEXT = {
-  dashboard: 'Consulte los pendientes y accesos rápidos correspondientes a su nivel de trabajo.',
-  people: 'Consulte clientes/beneficiarias dentro de su ámbito institucional, tengan o no un caso A.I. Use identificación o nombre y los filtros territoriales para localizar registros.',
-  references: 'Registre y consulte referencias a Atención Interdisciplinaria evitando redigitar información existente.',
-  cases: 'Consulte los casos de A.I. dentro de su ámbito. Los filtros ayudan a priorizar y planificar el trabajo.',
-  sessions: 'Organice sesiones con múltiples casos y documente la valoración interdisciplinaria de cada cliente/beneficiaria.',
-  attentions: 'Registre atenciones individuales o grupales. Una atención grupal se registra una sola vez.',
-  schedule: 'Planifique sesiones y atenciones. Regional y Nacional pueden consultar la programación sin modificarla.',
-  reporting: 'Aplique primero los filtros; todas las visualizaciones y consolidaciones responden al mismo corte.',
-  lab: 'Espacio experimental para explorar OCR y captura offline sin comprometer estas funciones como núcleo del producto.',
-};

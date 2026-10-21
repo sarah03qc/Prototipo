@@ -1,13 +1,13 @@
 import React,{useMemo,useState} from 'react';
 import { Plus, Search, Users } from 'lucide-react';
 import PersonSearch from '../components/PersonSearch';
-import { DISCIPLINES, HELP_TEXT, STRATEGIES } from '../data/catalogs';
+import { DISCIPLINES, STRATEGIES } from '../data/catalogs';
 import { scopeItems } from '../utils/access';
-import { AlertBanner, Badge, Field, HelpStrip, PageHeader, SectionCard, Tabs, inputClass } from '../components/ui';
+import { AlertBanner, Badge, Field, PageHeader, SectionCard, Tabs, inputClass } from '../components/ui';
 
 export default function AttentionsPage({state,actions,role}){
   const [tab,setTab]=useState('individual');
-  return <div className="space-y-6"><PageHeader eyebrow="Atención y seguimiento" title="Atenciones" description="Registre atenciones individuales y grupales. Una atención grupal se guarda una sola vez y se refleja en los historiales de sus participantes."/><HelpStrip>{HELP_TEXT.attentions}</HelpStrip><SectionCard><Tabs value={tab} onChange={setTab} items={[{id:'individual',label:'Atención individual'},{id:'group',label:'Atención grupal'}]}/><div className="pt-5">{tab==='individual'?<IndividualForm state={state} actions={actions} role={role}/>:<GroupForm state={state} actions={actions} role={role}/>}</div></SectionCard><Recent state={state} role={role}/></div>;
+  return <div className="space-y-6"><PageHeader eyebrow="Atención y seguimiento" title="Atenciones"/><SectionCard><Tabs value={tab} onChange={setTab} items={[{id:'individual',label:'Atención individual'},{id:'group',label:'Atención grupal'}]}/><div className="pt-5">{tab==='individual'?<IndividualForm state={state} actions={actions} role={role}/>:<GroupForm state={state} actions={actions} role={role}/>}</div></SectionCard><Recent state={state} role={role}/></div>;
 }
 
 function IndividualForm({state,actions,role}){

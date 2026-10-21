@@ -11,7 +11,7 @@ export function ExternalCoordinationPanel({ person }) {
 
   return (
     <div className="grid xl:grid-cols-2 gap-5">
-      <SectionCard title="Referencia interinstitucional" description="El cliente/beneficiaria se refiere a una institución/red; no se modela como referencia directa a una especialidad médica.">
+      <SectionCard title="Referencia interinstitucional">
         <div className="space-y-4">
           <Field label="Institución destino">
             <select value={institution} onChange={(e) => setInstitution(e.target.value)} className={inputClass}>
@@ -25,11 +25,11 @@ export function ExternalCoordinationPanel({ person }) {
             <Field label="Estado"><select value={status} onChange={(e) => setStatus(e.target.value)} className={inputClass}>{['Preparada','Enviada','Recibida','En seguimiento','Cerrada'].map(s => <option key={s}>{s}</option>)}</select></Field>
           </div>
           <button onClick={() => { setSent(true); setStatus('Enviada'); }} className="bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"><Send size={15} /> Simular envío</button>
-          {sent && <AlertBanner tone="green" title="Referencia marcada como enviada">La trazabilidad de envío y seguimiento queda asociada al caso.</AlertBanner>}
+          {sent && <AlertBanner tone="green" title="Referencia marcada como enviada">En seguimiento.</AlertBanner>}
         </div>
       </SectionCard>
 
-      <SectionCard title="Procesos diferenciados" description="Referencia, contra-referencia, RISA y denuncia no son el mismo documento.">
+      <SectionCard title="Procesos diferenciados">
         <div className="space-y-3">
           {[
             ['Contra-referencia interinstitucional','Respuesta/continuidad desde CEN-CINAI hacia otra institución.','blue'],
@@ -59,7 +59,7 @@ export function TransferPanel({ caseItem, person }) {
   return (
     <SectionCard title="Traslado entre Oficinas Locales" description="El traslado mantiene el caso y su historial; no corresponde a un cierre definitivo.">
       <div className="space-y-4">
-        <AlertBanner tone="blue" title="Caso especial — traslado">Se verifica foliatura/completitud, se genera Reporte de situación atendida y se registra continuidad hacia la Oficina Local receptora.</AlertBanner>
+
         <div className="grid md:grid-cols-2 gap-4">
           <Field label="Fecha"><input type="date" value={form.date} onChange={(e)=>setForm({...form,date:e.target.value})} className={inputClass}/></Field>
           <Field label="Motivo"><input value={form.reason} onChange={(e)=>setForm({...form,reason:e.target.value})} className={inputClass}/></Field>
@@ -76,7 +76,7 @@ export function TransferPanel({ caseItem, person }) {
           <button onClick={()=>setForm({...form,sent:true})} className="border border-violet-200 text-violet-800 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"><ArrowRightLeft size={15}/> Simular envío</button>
           <button disabled={!form.sent} onClick={()=>setForm({...form,received:true})} className="bg-violet-700 disabled:opacity-40 text-white px-4 py-2.5 rounded-xl text-sm font-semibold">Confirmar recepción</button>
         </div>
-        {form.received && <AlertBanner tone="green" title="Traslado recibido">La Oficina Local destino puede continuar el mismo caso sin reconstruir su historial.</AlertBanner>}
+        {form.received && <AlertBanner tone="green" title="Traslado recibido">Continuidad disponible en la Oficina Local destino.</AlertBanner>}
       </div>
     </SectionCard>
   );
