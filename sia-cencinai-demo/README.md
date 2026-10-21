@@ -97,12 +97,12 @@ npm run build
 Este proyecto sigue siendo un **prototipo de validación**, no un sistema productivo. SIDINACC/CAH, OCR real, sincronización offline, autenticación institucional, permisos definitivos y persistencia backend todavía no se implementan.
 
 
-## Asistente experimental con Gemini
+## Asistente experimental con Groq
 
-El prototipo incluye una pestaña **Asistente** conectada a Google Gemini mediante un pequeño servidor local. La clave nunca se expone al navegador.
+El prototipo incluye una pestaña **Asistente** conectada a Groq con el modelo `openai/gpt-oss-20b` mediante un pequeño servidor local. La clave nunca se expone al navegador.
 
 1. Copie `.env.example` como `.env`.
-2. Coloque su clave de Google AI Studio en `GEMINI_API_KEY`.
+2. Coloque su clave de Groq en `GROQ_API_KEY`.
 3. Ejecute `npm install`.
 4. Ejecute `npm run dev`.
 5. Abra la URL de Vite y seleccione **Asistente**.

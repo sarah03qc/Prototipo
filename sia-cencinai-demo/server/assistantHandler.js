@@ -22,12 +22,12 @@ export function createAssistantHandler({ ai, model, timeoutMs = 55000, logError 
       const history = previousMessages
         .filter((message) => ['user', 'assistant'].includes(message?.role) && !message.error && typeof message?.text === 'string' && message.text.trim())
         .map((message) => ({
-          role: message.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: message.text.trim() }],
+          role: message.role,
+          content: message.text.trim(),
         }));
 
-      // Gemini funciona mejor cuando el historial conversacional comienza con el usuario.
-      while (history[0]?.role === 'model') history.shift();
+      // Omit the initial greeting when sending the conversation to the provider.
+      while (history[0]?.role === 'assistant') history.shift();
 
       const systemInstruction = `
 Eres el asistente experimental del prototipo SIA-CENCINAI.
@@ -51,38 +51,37 @@ CONTEXTO SIMULADO DEL PROTOTIPO:
 ${JSON.stringify(context, null, 2)}
 `;
 
-      const chat = ai.chats.create({
-        model,
-        history,
-        config: {
-          systemInstruction,
-          temperature: 0.2,
-          httpOptions: { timeout: timeoutMs },
-        },
-      });
-
       const startedAt = Date.now();
       const controller = new AbortController();
       let timer;
       let response;
       try {
         response = await Promise.race([
-          chat.sendMessage({ message: lastMessage.text.trim(), config: { systemInstruction, temperature: 0.2, httpOptions: { timeout: timeoutMs }, abortSignal: controller.signal } }),
+          ai.chat.completions.create({
+            model,
+            messages: [
+              { role: 'system', content: systemInstruction },
+              ...history,
+              { role: 'user', content: lastMessage.text.trim() },
+            ],
+            temperature: 0.2,
+          }, { signal: controller.signal }),
           new Promise((_, reject) => {
             timer = setTimeout(() => { controller.abort(); reject(Object.assign(new Error('Request timeout'), { name: 'TimeoutError' })); }, timeoutMs);
           }),
         ]);
       } finally { clearTimeout(timer); }
-      if (typeof response.text !== 'string' || !response.text.trim()) {
+      const answer = response.choices?.[0]?.message?.content;
+      if (typeof answer !== 'string' || !answer.trim()) {
         return res.status(503).json({ kind: 'service' });
       }
       const latencyMs = Date.now() - startedAt;
 
       return res.json({
-        answer: response.text,
+        answer,
         model,
         latencyMs,
-        usage: response.usageMetadata || null,
+        usage: response.usage || null,
       });
     } catch (error) {
       const failure = classifyAssistantError(error);

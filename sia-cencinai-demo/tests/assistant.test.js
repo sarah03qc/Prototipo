@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GoogleGenAI } from '@google/genai';
+import { createGroqClient } from '../server/groqClient.js';
 import { createAssistantHandler } from '../server/assistantHandler.js';
 import { classifyAssistantError } from '../server/assistantErrors.js';
 import { ASSISTANT_ERRORS, requestAssistant } from '../src/utils/assistantRequest.js';
@@ -13,12 +13,12 @@ async function invoke(handler, body = payload) {
   return res;
 }
 
-test('three consecutive turns use the real SDK history format and current role', async () => {
+test('three consecutive turns use the Groq message format and current role', async () => {
   const requests = [];
-  const ai = new GoogleGenAI({ apiKey: 'test-only', httpOptions: { fetch: async (_url, init) => {
+  const ai = createGroqClient({ apiKey: 'test-only', fetchImpl: async (_url, init) => {
     requests.push(JSON.parse(init.body));
-    return new Response(JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text: 'Respuesta de prueba' }] }, finishReason: 'STOP' }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  } } });
+    return new Response(JSON.stringify({ choices: [{ message: { role: 'assistant', content: 'Respuesta de prueba' }, finish_reason: 'stop' }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } });
   const handler = createAssistantHandler({ ai, model: 'test-model', logError: () => {} });
   const messages = [{ role: 'assistant', text: '¿En qué puedo ayudarle?' }];
   for (let turn = 0; turn < 3; turn++) {
@@ -28,16 +28,16 @@ test('three consecutive turns use the real SDK history format and current role',
     messages.push({ role: 'assistant', text: res.body.answer });
   }
   assert.equal(requests.length, 3);
-  assert.deepEqual(requests[2].contents.map(x => x.role), ['user', 'model', 'user', 'model', 'user']);
-  assert.match(JSON.stringify(requests[2].systemInstruction), /Nacional/);
+  assert.deepEqual(requests[2].messages.map(x => x.role), ['system', 'user', 'assistant', 'user', 'assistant', 'user']);
+  assert.match(requests[2].messages[0].content, /Nacional/);
 });
 
 test('success, error, success remains available with no raw provider details', async () => {
   let calls = 0;
-  const handler = createAssistantHandler({ model: 'test', logError: () => {}, ai: { chats: { create: () => ({ sendMessage: async () => {
+  const handler = createAssistantHandler({ model: 'test', logError: () => {}, ai: { chat: { completions: { create: async () => {
     if (++calls === 2) throw new Error('SECRET provider stack');
-    return { text: 'Respuesta' };
-  } }) } } });
+    return { choices: [{ message: { content: 'Respuesta' } }] };
+  } } } } });
   const fetchImpl = async (_url, init) => {
     const res = await invoke(handler, JSON.parse(init.body));
     return response(res.statusCode, res.body);
@@ -48,7 +48,7 @@ test('success, error, success remains available with no raw provider details', a
 });
 
 test('quota is distinguished from configuration, network and general service errors', () => {
-  for (const error of [{ status: 429 }, new Error('RESOURCE_EXHAUSTED'), new Error('quota exceeded'), new Error('rate limit')]) {
+  for (const error of [{ status: 429 }, new Error('rate_limit_exceeded'), new Error('quota exceeded'), new Error('rate limit')]) {
     assert.equal(classifyAssistantError(error).kind, 'quota');
   }
   assert.equal(classifyAssistantError({ status: 401 }).kind, 'configuration');
@@ -71,8 +71,8 @@ test('network failure and a stalled response body time out and allow another req
   assert.equal(await requestAssistant(payload, { fetchImpl: async () => response(200, { answer: 'Lista' }) }), 'Lista');
 });
 
-test('server deadline releases a hanging SDK request without disclosing details', async () => {
-  const handler = createAssistantHandler({ model: 'test', timeoutMs: 10, logError: () => {}, ai: { chats: { create: () => ({ sendMessage: () => new Promise(() => {}) }) } } });
+test('server deadline releases a hanging provider request without disclosing details', async () => {
+  const handler = createAssistantHandler({ model: 'test', timeoutMs: 10, logError: () => {}, ai: { chat: { completions: { create: () => new Promise(() => {}) } } } });
   const res = await invoke(handler);
   assert.deepEqual(res.body, { kind: 'network' });
   assert.equal(res.statusCode, 504);
