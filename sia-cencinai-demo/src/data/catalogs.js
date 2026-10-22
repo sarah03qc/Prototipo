@@ -1,6 +1,6 @@
 export const ROLES = [
   { id: 'ESTABLISHMENT', label: 'Profesional / Asistente 3 — Establecimiento', scope: 'CINAI Los Robles', level: 'establishment' },
-  { id: 'EEII_LOCAL', label: 'Profesional EE.II. — Oficina Local', scope: 'Oficina Local Alajuela', level: 'local' },
+  { id: 'EEII_LOCAL', label: 'Profesional del Equipo Interdisciplinario — Oficina Local', scope: 'Oficina Local Alajuela', level: 'local' },
   { id: 'JEFATURA_OL', label: 'Jefatura — Oficina Local', scope: 'Oficina Local Alajuela', level: 'local' },
   { id: 'ATE_REGIONAL', label: 'ATE / Dirección Regional', scope: 'Región Central Norte', level: 'regional' },
   { id: 'NIVEL_NACIONAL', label: 'UIVCD / UNAT — Nivel Nacional', scope: 'Costa Rica', level: 'national' },

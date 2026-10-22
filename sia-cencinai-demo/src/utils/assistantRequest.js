@@ -33,10 +33,18 @@ export async function requestAssistant(payload, { signal, fetchImpl = fetch, tim
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
-      // Never render a provider/proxy response body as an error message.
+      // Temporary local diagnostics are explicitly supplied and redacted by the backend.
       let data;
       try { data = await response.json(); } catch { data = null; }
       if (!response.ok) {
+        if (import.meta.env?.DEV && data?.diagnostic) {
+          const diagnostic = data.diagnostic;
+          const body = typeof diagnostic.body === 'string'
+            ? diagnostic.body : JSON.stringify(diagnostic.body, null, 2);
+          const error = new AssistantRequestError('service');
+          error.diagnosticText = `HTTP ${diagnostic.httpStatus} ${diagnostic.statusText || ''}\n\n${body}`;
+          throw error;
+        }
         const kind = response.status === 429 ? 'quota'
           : [401, 403].includes(response.status) ? 'configuration'
           : [502, 504].includes(response.status) ? 'network'

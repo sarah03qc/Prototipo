@@ -1,4 +1,5 @@
 import { classifyAssistantError } from './assistantErrors.js';
+import { redactGroqDiagnostic } from './groqClient.js';
 
 export function createAssistantHandler({ ai, model, timeoutMs = 55000, logError = console.error }) {
   return async (req, res) => {
@@ -84,6 +85,20 @@ ${JSON.stringify(context, null, 2)}
         usage: response.usage || null,
       });
     } catch (error) {
+      // TEMPORARY: local diagnostics only. Production keeps the friendly error path.
+      if (process.env.NODE_ENV !== 'production') {
+        const httpStatus = Number.isInteger(error.status) && error.status >= 400 && error.status <= 599
+          ? error.status : 500;
+        const diagnostic = redactGroqDiagnostic({
+          name: error.name,
+          httpStatus,
+          statusText: error.statusText || '',
+          body: error.body ?? { error: { message: error.message, type: error.type, code: error.code, param: error.param } },
+          error: { message: error.message, type: error.type, code: error.code, param: error.param },
+        });
+        logError('TEMPORARY assistant diagnostic:', JSON.stringify(diagnostic, null, 2));
+        return res.status(httpStatus).json({ diagnostic });
+      }
       const failure = classifyAssistantError(error);
       // Only safe diagnostic categories; provider messages may contain credentials or request data.
       logError('Assistant request failed', failure);

@@ -125,7 +125,7 @@ export default function AssistantPage({ state, role }) {
       }
     } catch (error) {
       if (pendingRef.current === controller && !controller.signal.aborted) {
-        setMessages((current) => [...current, { role: 'assistant', text: ASSISTANT_ERRORS[error.kind] || ASSISTANT_ERRORS.service, error: true }]);
+        setMessages((current) => [...current, { role: 'assistant', text: (import.meta.env.DEV && error.diagnosticText) || ASSISTANT_ERRORS[error.kind] || ASSISTANT_ERRORS.service, error: true }]);
       }
     } finally {
       if (pendingRef.current === controller) {
