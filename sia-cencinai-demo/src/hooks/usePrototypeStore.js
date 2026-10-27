@@ -1,21 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { demoCases,demoCoordinations,demoDocuments,demoGroupAttentions,demoOcr,demoPeople,demoReferences,demoReports,demoSchedule,demoSessions,demoSyncItems,demoTimeline,demoTransfers } from '../data/mockData';
+import { calculatePriority } from '../data/catalogs';
+import { createReferenceSnapshot, nextReferenceConsecutive, referenceContext } from '../utils/references';
+import { prepareDemoState } from '../utils/demoState';
 
 const STORAGE_KEY='sia-cencinai-prototype-v3-1';
 const today='2026-09-16';
 const initialState={people:demoPeople,references:demoReferences,cases:demoCases,sessions:demoSessions,timeline:demoTimeline,groupAttentions:demoGroupAttentions,documents:demoDocuments,coordinations:demoCoordinations,reports:demoReports,schedule:demoSchedule,transfers:demoTransfers,syncItems:demoSyncItems,ocr:demoOcr,connection:'online'};
 
 export function usePrototypeStore(){
-  const [state,setState]=useState(()=>{try{const raw=localStorage.getItem(STORAGE_KEY);return raw?{...initialState,...JSON.parse(raw)}:initialState}catch{return initialState}});
+  const [state,setState]=useState(()=>{try{const raw=localStorage.getItem(STORAGE_KEY);return raw?prepareDemoState(JSON.parse(raw),initialState):initialState}catch{return initialState}});
   useEffect(()=>{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))},[state]);
   const actions=useMemo(()=>({
     resetDemo(){setState(initialState)},
     setConnection(connection){setState(p=>({...p,connection}))},
-    addReference(reference){setState(p=>({...p,references:[{...reference,id:`REF-${Date.now()}`},...p.references]}))},
+    addReference(reference){setState(p=>{const person=p.people.find(x=>x.id===reference.personId);if(!person)return p;return {...p,references:[{...reference,id:`REF-${Date.now()}`,snapshot:createReferenceSnapshot(person,reference.date),consecutive:nextReferenceConsecutive(person,reference.date,p.references)},...p.references]}})},
     updateReference(id,patch){setState(p=>({...p,references:p.references.map(r=>r.id===id?{...r,...patch}:r)}))},
     addSession(session){setState(p=>({...p,sessions:[{...session,id:`SES-${Date.now()}`},...p.sessions]}))},
     updateSession(id,patch){setState(p=>({...p,sessions:p.sessions.map(s=>s.id===id?{...s,...patch}:s)}))},
-    createCaseFromReference(referenceId,payload){setState(p=>{const ref=p.references.find(r=>r.id===referenceId);if(!ref)return p;const person=p.people.find(x=>x.id===ref.personId);const id=`AI-${Date.now()}`;const c={id,personId:ref.personId,referenceId,openedAt:payload.openedAt||today,status:'Activo',localOffice:person?.localOffice,establishment:person?.establishment,region:person?.region,...payload};return{...p,references:p.references.map(r=>r.id===referenceId?{...r,status:'Admitida a A.I.'}:r),cases:[c,...p.cases],timeline:[{id:`EVT-${Date.now()}`,caseId:id,date:c.openedAt,type:'Sesión interdisciplinaria',title:'Caso admitido a Atención Interdisciplinaria',detail:`Prioridad ${c.priority||'sin asignar'}. ${c.valuationSummary||''}`,discipline:'EE.II.',professional:'Equipo Interdisciplinario'},...p.timeline]}})},
+    createCaseFromReference(referenceId,payload){setState(p=>{const ref=p.references.find(r=>r.id===referenceId);const priority=calculatePriority(payload.riskLevel,payload.protectionLevel);if(!ref||!priority)return p;const person=p.people.find(x=>x.id===ref.personId);const id=`AI-${Date.now()}`;const c={id,personId:ref.personId,referenceId,openedAt:payload.openedAt||today,status:'Activo',localOffice:person?.localOffice,establishment:person?.establishment,region:person?.region,...payload,priority,referenceConsecutive:ref.consecutive,referenceSnapshot:structuredClone(referenceContext(ref,person))};return{...p,references:p.references.map(r=>r.id===referenceId?{...r,status:'Admitida a A.I.'}:r),cases:[c,...p.cases],timeline:[{id:`EVT-${Date.now()}`,caseId:id,date:c.openedAt,type:'Sesión interdisciplinaria',title:'Caso admitido a Atención Interdisciplinaria',detail:`Prioridad ${c.priority||'sin asignar'}. ${c.valuationSummary||''}`,discipline:'EE.II.',professional:'Equipo Interdisciplinario'},...p.timeline]}})},
     addAttention(caseId,attention){setState(p=>({...p,timeline:[{id:`EVT-${Date.now()}`,caseId,...attention},...p.timeline]}))},
     addGroupAttention(attention){const id=`GRP-${Date.now()}`;setState(p=>{const events=attention.participantIds.flatMap((pid)=>p.cases.filter(c=>c.personId===pid&&c.status==='Activo').map(c=>({id:`EVT-${Date.now()}-${c.id}`,caseId:c.id,date:attention.date,type:'Atención grupal',title:attention.topic,detail:attention.actions||'',discipline:(attention.disciplines||[]).join(', ')||'Interdisciplinaria',professional:(attention.professionals||[]).join(', '),groupInterventionId:id})));return{...p,groupAttentions:[{...attention,id},...p.groupAttentions],timeline:[...events,...p.timeline]}})},
     addDocument(doc){setState(p=>({...p,documents:[{...doc,id:`DOC-${Date.now()}`},...p.documents]}))},

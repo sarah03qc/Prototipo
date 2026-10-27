@@ -17,7 +17,7 @@ export function StatusBadge({ status }) {
 }
 
 export function PriorityBadge({ priority }) {
-  const tone=priority==='Urgencia'?'red':priority==='Alto'?'amber':priority==='Moderado'?'blue':priority==='Bajo'?'green':'neutral';
+  const tone=priority==='Alto'?'red':priority==='Moderado'?'amber':priority==='Bajo'?'green':'neutral';
   return <Badge tone={tone}>{priority||'Sin asignar'}</Badge>;
 }
 

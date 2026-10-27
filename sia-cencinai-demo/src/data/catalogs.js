@@ -7,8 +7,18 @@ export const ROLES = [
 ];
 
 export const CASE_STATUSES = ['Pendiente de análisis', 'Activo', 'Cerrado', 'Pendiente de continuidad'];
-export const PRIORITIES = ['Urgencia', 'Alto', 'Moderado', 'Bajo'];
-export const DISCIPLINES = ['Nutrición', 'Psicología', 'Educación Preescolar', 'Terapia de Lenguaje', 'Terapia Física', 'Otra'];
+export const PRIORITIES = ['Alto', 'Moderado', 'Bajo'];
+export const RISK_LEVELS = ['Alto', 'Moderado', 'Bajo'];
+export const PROTECTION_LEVELS = ['Alta', 'Moderada', 'Baja'];
+export const PRIORITY_MATRIX = {
+  Alto: { Baja: 'Alto', Moderada: 'Alto', Alta: 'Moderado' },
+  Moderado: { Baja: 'Alto', Moderada: 'Moderado', Alta: 'Moderado' },
+  Bajo: { Baja: 'Moderado', Moderada: 'Bajo', Alta: 'Bajo' },
+};
+export function calculatePriority(riskLevel, protectionLevel) {
+  return PRIORITY_MATRIX[riskLevel]?.[protectionLevel] || '';
+}
+export const DISCIPLINES = ['Nutrición', 'Psicología', 'Educación Preescolar', 'Terapia de Lenguaje', 'Terapia Física'];
 export const STRATEGIES = [
   'Atención individualizada', 'Consejería', 'Visita domiciliar', 'Atención en contexto',
   'Atención grupal', 'Actividad educativa', 'Actividad comunitaria', 'Sesión de Apoyo',
@@ -19,7 +29,7 @@ export const DETECTION_ORIGINS = ['Vigilancia / tamizaje', 'Observación directa
 
 export const REFERENCE_MOTIVES = {
   Crecimiento: ['Condición de malnutrición', 'Malnutrición con necesidades especiales', 'Otra alteración del crecimiento'],
-  Desarrollo: ['Riesgo o rezago', 'Resultado EDIN II que requiere análisis', 'Hallazgo EVADE', 'Otra alteración del desarrollo'],
+  Desarrollo: ['EDIN II: riesgo de retraso (rojo)', 'EVADE: riesgo de rezago (0,1 sin logro de edad anterior)'],
   Salud: [
     'Alteración visual', 'Alteración auditiva', 'Alteración del lenguaje', 'Alteración motora',
     'Alteración de salud oral', 'Alergia alimentaria', 'Enfermedad crónica',
@@ -27,7 +37,7 @@ export const REFERENCE_MOTIVES = {
     'Sospecha o diagnóstico de trastorno del neurodesarrollo', 'Alteraciones emocionales',
     'Alteraciones conductuales', 'Otra condición de salud',
   ],
-  'Factores de riesgo': ['Factor de riesgo individual', 'Factor de riesgo hogar-familiar', 'Factor de riesgo comunitario', 'Otro factor de riesgo'],
+  'Factores de riesgo': ['Factor de riesgo individual', 'Factor de riesgo hogar-familiar', 'Factor de riesgo comunitario'],
 };
 
 export const RISK_MATRIX = {
