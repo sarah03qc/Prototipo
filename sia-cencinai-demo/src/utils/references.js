@@ -68,6 +68,10 @@ export function normalizeReferenceMotives(reference) {
   };
   return {
     ...reference,
+    origin: ({
+      'Observación directa': 'Observación',
+      'Información aportada por la familia': 'Información aportada por la familia u otros',
+    })[reference.origin] || reference.origin,
     motives: [...new Set((reference.motives || []).filter(m => m !== 'Otro factor de riesgo').map(m => replacements[m] || m))],
     factorDetails: Object.fromEntries(Object.entries(reference.factorDetails || {}).filter(([m]) => m !== 'Otro factor de riesgo').map(([m, detail]) => [replacements[m] || m, detail])),
   };

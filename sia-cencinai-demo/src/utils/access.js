@@ -1,4 +1,4 @@
-import { ROLES } from '../data/catalogs';
+import { ROLES } from '../data/catalogs.js';
 
 export function roleConfig(roleId) {
   return ROLES.find((r) => r.id === roleId) || ROLES[1];
@@ -9,7 +9,14 @@ export function canEditOperational(roleId) {
 }
 
 export function canCreateReference(roleId) {
-  return ['ESTABLISHMENT', 'EEII_LOCAL', 'JEFATURA_OL'].includes(roleId);
+  return roleConfig(roleId).level === 'establishment' || canEditOperational(roleId);
+}
+
+export function demoReferenceAuthor(roleId) {
+  if (roleId === 'ESTABLISHMENT_ASSISTANT2') return 'Carlos Rodríguez — Asistente 2';
+  if (roleConfig(roleId).level === 'establishment') return 'María López — Asistente 3';
+  if (roleId === 'JEFATURA_OL') return 'Ana Morales — Jefatura de Oficina Local';
+  return 'Ana Morales — Profesional del Equipo Interdisciplinario';
 }
 
 export function isReadOnlyAnalytics(roleId) {

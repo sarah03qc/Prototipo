@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculatePriority, DISCIPLINES, PRIORITIES, REFERENCE_MOTIVES, RISK_MATRIX } from '../src/data/catalogs.js';
+import { calculatePriority, DETECTION_ORIGINS, DISCIPLINES, PRIORITIES, REFERENCE_MOTIVES, RISK_MATRIX, ROLES } from '../src/data/catalogs.js';
+import { canCreateReference, canEditOperational, demoReferenceAuthor, roleConfig, roleFilters, scopeItems } from '../src/utils/access.js';
 import { demoPeople, demoReferences, demoCases, demoGroupAttentions, demoSessions } from '../src/data/mockData.js';
 import { ageAtDate, createReferenceSnapshot, nextReferenceConsecutive, normalizeReferenceMotives, referenceContext } from '../src/utils/references.js';
 import { prepareDemoState } from '../src/utils/demoState.js';
@@ -17,6 +18,9 @@ test('all nine professional risk/protection combinations yield the required prio
 });
 
 test('reference motives are restricted without reducing the professional risk matrix', () => {
+  assert.deepEqual(REFERENCE_MOTIVES.Crecimiento, ['Condición de malnutrición', 'Malnutrición con necesidades especiales']);
+  assert.ok(REFERENCE_MOTIVES.Salud.includes('Otra condición de salud'));
+  assert.deepEqual(DETECTION_ORIGINS, ['Vigilancia / tamizaje', 'Observación', 'Información aportada por la familia u otros', 'Referencia externa']);
   assert.deepEqual(REFERENCE_MOTIVES.Desarrollo, ['EDIN II: riesgo de retraso (rojo)', 'EVADE: riesgo de rezago (0,1 sin logro de edad anterior)']);
   assert.equal(REFERENCE_MOTIVES['Factores de riesgo'].length, 3);
   assert.ok(!DISCIPLINES.includes('Otra'));
@@ -57,6 +61,7 @@ test('demo records demonstrate coherent priorities, full references, guardian co
   for (const person of demoPeople) assert.ok(person.guardian.name && person.guardian.phone && person.address);
   assert.equal(new Set(demoReferences.map(r => r.consecutive)).size, demoReferences.length);
   for (const reference of demoReferences) {
+    assert.ok(DETECTION_ORIGINS.includes(reference.origin));
     assert.ok(reference.priorActions && reference.priorResults && reference.snapshot);
     assert.ok(reference.motives.every(m => Object.values(REFERENCE_MOTIVES).flat().includes(m)));
   }
@@ -101,9 +106,42 @@ test('print uses historical context and includes prior actions/results with safe
   assert.ok(html.includes(reference.snapshot.name));
   assert.ok(html.includes(reference.snapshot.guardian.phone));
   assert.ok(html.includes(reference.snapshot.age));
+  assert.ok(html.includes('Vía de Atención'));
+  assert.ok(html.includes(reference.referredBy));
   assert.ok(html.includes('Acción anterior &lt;texto&gt; &amp; ejemplo'));
   assert.ok(html.includes('Resultado de seguimiento'));
   assert.ok(!html.includes('No debe reemplazar el snapshot'));
+});
+
+test('Asistente 2 shares establishment scope, filters and sensitive-data restrictions', () => {
+  const role = ROLES.find(r => r.label === 'Asistente 2 — Establecimiento');
+  assert.ok(role);
+  assert.equal(role.level, 'establishment');
+  assert.equal(role.scope, roleConfig('ESTABLISHMENT').scope);
+  assert.equal(canCreateReference(role.id), true);
+  assert.equal(canEditOperational(role.id), false);
+  assert.deepEqual(scopeItems(demoPeople, role.id), scopeItems(demoPeople, 'ESTABLISHMENT'));
+  assert.deepEqual(scopeItems(demoReferences, role.id), scopeItems(demoReferences, 'ESTABLISHMENT'));
+  assert.deepEqual(roleFilters(role.id, demoPeople), roleFilters('ESTABLISHMENT', demoPeople));
+  assert.equal(canCreateReference('ATE_REGIONAL'), false);
+});
+
+test('demo reference author represents the currently selected role without rewriting historical references', () => {
+  assert.equal(demoReferenceAuthor('ESTABLISHMENT_ASSISTANT2'), 'Carlos Rodríguez — Asistente 2');
+  assert.equal(demoReferenceAuthor('ESTABLISHMENT'), 'María López — Asistente 3');
+  assert.equal(demoReferenceAuthor('EEII_LOCAL'), 'Ana Morales — Profesional del Equipo Interdisciplinario');
+  const seed = { people:demoPeople, references:demoReferences, cases:demoCases, groupAttentions:demoGroupAttentions, sessions:demoSessions };
+  const saved = structuredClone(seed);
+  saved.references[0].referredBy = demoReferenceAuthor('ESTABLISHMENT_ASSISTANT2');
+  saved.references[0].origin = 'Observación directa';
+  saved.references[1].origin = 'Información aportada por la familia';
+  const restored = prepareDemoState(saved, seed);
+  assert.equal(restored.references[0].origin, 'Observación');
+  assert.equal(restored.references[1].origin, 'Información aportada por la familia u otros');
+  assert.equal(restored.references[0].referredBy, 'Carlos Rodríguez — Asistente 2');
+  assert.notEqual(restored.references[0].referredBy, demoReferenceAuthor('ESTABLISHMENT'));
+  assert.deepEqual(restored.references[0].snapshot, saved.references[0].snapshot);
+  assert.equal(restored.references[0].consecutive, saved.references[0].consecutive);
 });
 
 test('Excel export has BOM, explicit separator, separate columns and quoted multiline values', () => {

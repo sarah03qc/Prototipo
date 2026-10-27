@@ -4,6 +4,7 @@ export const ROLES = [
   { id: 'JEFATURA_OL', label: 'Jefatura — Oficina Local', scope: 'Oficina Local Alajuela', level: 'local' },
   { id: 'ATE_REGIONAL', label: 'ATE / Dirección Regional', scope: 'Región Central Norte', level: 'regional' },
   { id: 'NIVEL_NACIONAL', label: 'UIVCD / UNAT — Nivel Nacional', scope: 'Costa Rica', level: 'national' },
+  { id: 'ESTABLISHMENT_ASSISTANT2', label: 'Asistente 2 — Establecimiento', scope: 'CINAI Los Robles', level: 'establishment' },
 ];
 
 export const CASE_STATUSES = ['Pendiente de análisis', 'Activo', 'Cerrado', 'Pendiente de continuidad'];
@@ -25,10 +26,10 @@ export const STRATEGIES = [
   'Referencia interinstitucional', 'Otra',
 ];
 export const REFERENCE_TYPES = ['Urgencia', 'No inmediata'];
-export const DETECTION_ORIGINS = ['Vigilancia / tamizaje', 'Observación directa', 'Información aportada por la familia', 'Referencia externa', 'Otro'];
+export const DETECTION_ORIGINS = ['Vigilancia / tamizaje', 'Observación', 'Información aportada por la familia u otros', 'Referencia externa'];
 
 export const REFERENCE_MOTIVES = {
-  Crecimiento: ['Condición de malnutrición', 'Malnutrición con necesidades especiales', 'Otra alteración del crecimiento'],
+  Crecimiento: ['Condición de malnutrición', 'Malnutrición con necesidades especiales'],
   Desarrollo: ['EDIN II: riesgo de retraso (rojo)', 'EVADE: riesgo de rezago (0,1 sin logro de edad anterior)'],
   Salud: [
     'Alteración visual', 'Alteración auditiva', 'Alteración del lenguaje', 'Alteración motora',

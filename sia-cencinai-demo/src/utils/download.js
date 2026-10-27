@@ -27,8 +27,8 @@ export function downloadExcelLike(filename, headers, rows) {
 }
 
 export function downloadReferenceTemplate() {
-  const headers = ['identificacion','fecha_referencia','tipo','origen','motivos','acciones_previas','resultados_previos','informacion_relevante','responsable'];
-  const example = ['1-1111-1111','2026-09-16','No inmediata','Observación directa','Alteraciones conductuales','Orientación familiar','Avances parciales','Detalle de ejemplo','Nombre profesional'];
+  const headers = ['identificacion','fecha_referencia','Vía de Atención','origen','motivos','acciones_previas','resultados_previos','informacion_relevante'];
+  const example = ['1-1111-1111','2026-09-16','No inmediata','Observación','Alteraciones conductuales','Orientación familiar','Avances parciales','Detalle de ejemplo'];
   downloadExcelLike('plantilla_referencia_ai', headers, [example]);
 }
 
@@ -51,7 +51,7 @@ export function referencePrintHtml(reference, person) {
     @media print{body{padding:0;max-width:none}button{display:none}@page{size:A4;margin:18mm}}
   </style></head><body><header><h1>Referencia a Atención Interdisciplinaria</h1><p class="consecutive">${escapeHtml(reference.consecutive || reference.id)}</p><p>Fecha de referencia: ${escapeHtml(reference.date)}</p></header>
     <section><h2>Identificación y contexto del niño</h2><dl>${fields}</dl></section>
-    <section><h2>Datos de la referencia</h2><dl>${[['Responsable de la referencia',reference.referredBy],['Tipo',reference.type],['Origen',reference.origin]].map(([label,value])=>`<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value||'—')}</dd></div>`).join('')}</dl></section>
+    <section><h2>Datos de la referencia</h2><dl>${[['Responsable de la referencia',reference.referredBy],['Vía de Atención',reference.type],['Origen',reference.origin]].map(([label,value])=>`<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value||'—')}</dd></div>`).join('')}</dl></section>
     <section><h2>Motivos y detalle</h2><ul>${motives || '<li>—</li>'}</ul></section>${notes}
     <button onclick="window.print()" style="margin-top:20px;padding:8px 14px">Imprimir</button></body></html>`;
 }
