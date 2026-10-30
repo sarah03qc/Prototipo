@@ -12,7 +12,7 @@ export function StatusBadge({ status }) {
   if(s.includes('pendiente')||s.includes('programada')||s.includes('reprogramada')) tone='amber';
   if(s.includes('urgencia')||s.includes('conflicto')||s.includes('cancelada')) tone='red';
   if(s.includes('traslado')) tone='purple';
-  if(s.includes('recibida')||s.includes('admitida')) tone='blue';
+  if(s.includes('admitida')) tone='blue';
   return <Badge tone={tone}>{status||'—'}</Badge>;
 }
 

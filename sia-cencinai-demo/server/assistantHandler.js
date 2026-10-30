@@ -1,3 +1,4 @@
+import { selectAssistantContext } from './assistantContextSelection.js';
 import { classifyAssistantError } from './assistantErrors.js';
 import { redactGroqDiagnostic } from './groqClient.js';
 
@@ -42,6 +43,10 @@ REGLAS OBLIGATORIAS:
 - Respeta estrictamente el rol y el ámbito autorizado indicados.
 - Responde en español, de forma clara, breve y profesional.
 - No emitas diagnósticos ni recomendaciones clínicas.
+- Solo consulta: no ejecutes ni afirmes haber creado, modificado, cancelado o cerrado registros.
+- La prioridad general no autoriza revelar riesgo, protección ni detalle interno a Establecimiento.
+- Una visita general sin asociaciones explícitas no programa a todos los niños del establecimiento.
+- Las posibles referencias pendientes provienen de fuentes simuladas, no son diagnósticos ni casos abiertos y requieren revisión humana.
 - No afirmes que estás consultando sistemas institucionales reales.
 - Si haces un conteo o resumen, basa el resultado exclusivamente en los registros recibidos.
 
@@ -49,7 +54,7 @@ Rol actual: ${role}
 Ámbito autorizado: ${scope}
 
 CONTEXTO SIMULADO DEL PROTOTIPO:
-${JSON.stringify(context, null, 2)}
+${JSON.stringify(selectAssistantContext(context, messages))}
 `;
 
       const startedAt = Date.now();

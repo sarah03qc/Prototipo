@@ -8,6 +8,10 @@ export function canEditOperational(roleId) {
   return ['EEII_LOCAL', 'JEFATURA_OL'].includes(roleId);
 }
 
+export function canViewCaseDetails(roleId) {
+  return ROLES.some(role => role.id === roleId && role.level !== 'establishment');
+}
+
 export function canCreateReference(roleId) {
   return roleConfig(roleId).level === 'establishment' || canEditOperational(roleId);
 }

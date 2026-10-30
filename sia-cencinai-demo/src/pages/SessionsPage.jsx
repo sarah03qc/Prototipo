@@ -1,14 +1,14 @@
 import React,{useMemo,useState} from 'react';
 import { Plus, Search } from 'lucide-react';
-import { calculatePriority, DISCIPLINES, PROTECTION_LEVELS, RISK_LEVELS, RISK_MATRIX, STRATEGIES } from '../data/catalogs';
+import { calculatePriority, FOLLOW_UP_FREQUENCIES, DISCIPLINES, PROTECTION_LEVELS, RISK_LEVELS, RISK_MATRIX, STRATEGIES } from '../data/catalogs';
 import { scopeItems } from '../utils/access';
 import { Badge, Field, PageHeader, PriorityBadge, SectionCard, StatusBadge, inputClass } from '../components/ui';
 
 const emptyValuation=()=>({selected:{},details:{},decision:'',riskLevel:'',protectionLevel:'',strategies:[],disciplines:[],frequency:'Mensual',summary:'',decisionJustification:''});
-const frequencyOptions=['Semanal','Quincenal','Mensual','Bimensual','Según necesidad'];
+const frequencyOptions=FOLLOW_UP_FREQUENCIES;
 
 export default function SessionsPage({state,actions,role,onNavigate}){
-  const refs=scopeItems(state.references,role).filter(r=>['Recibida','Pendiente de revisión'].includes(r.status));
+  const refs=scopeItems(state.references,role).filter(r=>r.status==='Pendiente de revisión');
   const [selectedSessionId,setSelectedSessionId]=useState(state.sessions[0]?.id);
   const [selectedRefId,setSelectedRefId]=useState(state.sessions[0]?.referenceIds?.[0]||refs[0]?.id);
   const [query,setQuery]=useState('');

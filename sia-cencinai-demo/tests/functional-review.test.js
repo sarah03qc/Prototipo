@@ -56,7 +56,7 @@ test('institutional consecutive advances per establishment and year', () => {
   assert.match(nextReferenceConsecutive(demoPeople[1], '2026-09-16', [{consecutive:first}]), /1010103-REF-001-2026$/);
 });
 
-test('demo records demonstrate coherent priorities, full references, guardian context and companions', () => {
+test('demo records demonstrate coherent priorities, full references, guardian context without companions', () => {
   assert.equal(demoPeople.length, 12);
   for (const person of demoPeople) assert.ok(person.guardian.name && person.guardian.phone && person.address);
   assert.equal(new Set(demoReferences.map(r => r.consecutive)).size, demoReferences.length);
@@ -71,7 +71,7 @@ test('demo records demonstrate coherent priorities, full references, guardian co
     assert.ok(caseItem.disciplines.every(d => DISCIPLINES.includes(d)));
   }
   assert.ok(demoReferences.some(r => r.status === 'No requiere A.I.' && r.decisionJustification));
-  assert.ok(demoGroupAttentions.some(g => Object.values(g.companions || {}).some(list => list.length)));
+  assert.ok(demoGroupAttentions.every(g => !('companions' in g)));
 });
 
 test('old local demo records keep edits while receiving the new fields and compatible catalog values', () => {

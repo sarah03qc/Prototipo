@@ -1,27 +1,21 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, Database, Send, UserRound } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Bot, Database, Send, Trash2, UserRound } from 'lucide-react';
 import { PageHeader, SectionCard } from '../components/ui';
-import { roleConfig, scopeItems } from '../utils/access';
+import { roleConfig } from '../utils/access';
+import { buildAssistantContext } from '../utils/assistantContext.js';
 import { ASSISTANT_ERRORS, requestAssistant } from '../utils/assistantRequest';
 
-export default function AssistantPage({ state, role }) {
+export default function AssistantPage({ state, role, chat }) {
   const cfg = roleConfig(role);
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      text: '¿En qué puedo ayudarle?',
-    },
-  ]);
+  const conversationState = useSyncExternalStore(chat.subscribe, chat.getSnapshot, chat.getSnapshot);
+  const messages = useMemo(() => [{role:'assistant',text:'¿En qué puedo ayudarle?'}, ...conversationState.messages], [conversationState.messages]);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
-  const pendingRef = useRef(null);
   const inputRef = useRef(null);
   const conversationRef = useRef(null);
 
-  useEffect(() => () => {
-    pendingRef.current?.abort();
-    pendingRef.current = null;
-  }, []);
+  useEffect(() => () => chat.cancelRequest(), [chat]);
 
   useEffect(() => {
     const conversation = conversationRef.current;
@@ -32,84 +26,16 @@ export default function AssistantPage({ state, role }) {
     if (!loading) inputRef.current?.focus({ preventScroll: true });
   }, [loading]);
 
-  const context = useMemo(() => {
-    const people = scopeItems(state.people, role);
-    const cases = scopeItems(state.cases, role);
-    const references = scopeItems(state.references, role);
-    const schedule = scopeItems(state.schedule, role);
-    const caseIds = new Set(cases.map((item) => item.id));
-
-    return {
-      resumen: {
-        clientesBeneficiarias: people.length,
-        casosAI: cases.length,
-        casosActivos: cases.filter((item) => item.status === 'Activo').length,
-        referencias: references.length,
-        actividadesProgramacion: schedule.length,
-      },
-      clientesBeneficiarias: people.map((item) => ({
-        id: item.id,
-        identificacion: item.identification,
-        nombre: item.name,
-        establecimiento: item.establishment,
-        oficinaLocal: item.localOffice,
-        region: item.region,
-        modalidades: item.modalities,
-      })),
-      casosAI: cases.map((item) => ({
-        id: item.id,
-        personaId: item.personId,
-        estado: item.status,
-        prioridad: item.priority,
-        apertura: item.openedAt,
-        cierre: item.closedAt || null,
-        establecimiento: item.establishment,
-        oficinaLocal: item.localOffice,
-        region: item.region,
-        proximaAccion: item.nextAction || null,
-        fechaProximaAccion: item.nextActionDate || null,
-      })),
-      referencias: references.map((item) => ({
-        id: item.id,
-        personaId: item.personId,
-        tipo: item.type,
-        estado: item.status,
-        establecimiento: item.establishment,
-        oficinaLocal: item.localOffice,
-        region: item.region,
-      })),
-      programacion: schedule.map((item) => ({
-        id: item.id,
-        fecha: item.date,
-        tipo: item.type,
-        titulo: item.title,
-        estado: item.status,
-        establecimiento: item.establishment || null,
-        oficinaLocal: item.localOffice,
-        region: item.region,
-      })),
-      lineaTiempo: state.timeline
-        .filter((item) => caseIds.has(item.caseId))
-        .map((item) => ({
-          casoId: item.caseId,
-          fecha: item.date,
-          tipo: item.type,
-          titulo: item.title,
-          disciplina: item.discipline,
-          detalle: item.detail,
-        })),
-    };
-  }, [state, role]);
+  const context = useMemo(() => buildAssistantContext(state, role), [state, role]);
 
   const send = async (event) => {
     event.preventDefault();
     const prompt = text.trim();
-    if (!prompt || pendingRef.current) return;
+    if (!prompt || loading) return;
 
-    const controller = new AbortController();
-    pendingRef.current = controller;
+    const request = chat.beginRequest();
     const nextMessages = [...messages, { role: 'user', text: prompt }];
-    setMessages(nextMessages);
+    chat.append({ role: 'user', text: prompt });
     setText('');
     setLoading(true);
 
@@ -119,17 +45,17 @@ export default function AssistantPage({ state, role }) {
         context,
         role: cfg.label,
         scope: cfg.scope,
-      }, { signal: controller.signal });
-      if (pendingRef.current === controller) {
-        setMessages((current) => [...current, { role: 'assistant', text: answer }]);
+      }, { signal: request.signal });
+      if (request.isCurrent()) {
+        chat.append({ role: 'assistant', text: answer });
       }
     } catch (error) {
-      if (pendingRef.current === controller && !controller.signal.aborted) {
-        setMessages((current) => [...current, { role: 'assistant', text: (import.meta.env.DEV && error.diagnosticText) || ASSISTANT_ERRORS[error.kind] || ASSISTANT_ERRORS.service, error: true }]);
+      if (request.isCurrent()) {
+        chat.append({ role: 'assistant', text: (import.meta.env.DEV && error.diagnosticText) || ASSISTANT_ERRORS[error.kind] || ASSISTANT_ERRORS.service, error: true });
       }
     } finally {
-      if (pendingRef.current === controller) {
-        pendingRef.current = null;
+      if (request.isCurrent()) {
+        request.finish();
         setLoading(false);
       }
     }
@@ -140,8 +66,10 @@ export default function AssistantPage({ state, role }) {
       <PageHeader
         eyebrow="Función experimental"
         title="Asistente"
+        actions={<button className="border rounded-xl px-3 py-2 text-sm font-semibold flex items-center gap-2" onClick={()=>setConfirmClear(true)}><Trash2 size={15}/> Borrar chat</button>}
       />
 
+      {confirmClear&&<SectionCard><div role="alertdialog" aria-modal="false" aria-labelledby="clear-chat-title" className="flex flex-wrap items-center justify-between gap-3"><p id="clear-chat-title" className="text-sm font-semibold">¿Desea borrar la conversación actual?</p><div className="flex gap-2"><button className="border rounded-lg px-3 py-2 text-sm" onClick={()=>setConfirmClear(false)}>Cancelar</button><button className="bg-red-700 text-white rounded-lg px-3 py-2 text-sm" onClick={()=>{chat.clear();setText('');setLoading(false);setConfirmClear(false)}}>Borrar</button></div></div></SectionCard>}
       <div className="grid xl:grid-cols-[1fr_280px] gap-5">
         <SectionCard>
           <div ref={conversationRef} role="log" aria-label="Conversación" aria-live="polite" aria-busy={loading} className="h-[530px] overflow-y-auto bg-stone-50 border border-stone-200 rounded-2xl p-4 space-y-4">

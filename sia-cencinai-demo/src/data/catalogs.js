@@ -60,5 +60,7 @@ export const RISK_MATRIX = {
 };
 
 export const EXTERNAL_INSTITUTIONS = ['CCSS', 'MEP', 'PANI', 'INAMU', 'INA', 'IAFA', 'IMAS', 'MTSS', 'OAPVD', 'Otra'];
-export const SCHEDULE_TYPES = ['Sesión interdisciplinaria', 'Sesión de trabajo del EE.II.', 'Atención por establecimiento', 'Visita domiciliar', 'Otra atención'];
+export const SCHEDULE_TYPES = ['Sesión interdisciplinaria', 'Visita a establecimiento para Atención Interdisciplinaria', 'Visita domiciliar', 'Otra atención'];
 export const SCHEDULE_STATUSES = ['Programada', 'Realizada', 'Reprogramada', 'Cancelada'];
+
+export const FOLLOW_UP_FREQUENCIES = ['Semanal','Quincenal','Mensual','Bimensual','Trimestral','Semestral','Según necesidad'];

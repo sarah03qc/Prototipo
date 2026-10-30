@@ -1,3 +1,5 @@
+import { createAssistantChat } from './utils/assistantChat';
+import { isOverdue } from './utils/schedule';
 import React,{useState} from 'react';
 import AppShell from './components/AppShell';
 import { usePrototypeStore } from './hooks/usePrototypeStore';
@@ -16,15 +18,17 @@ import { roleConfig } from './utils/access';
 export default function App(){
   const {state,actions}=usePrototypeStore();
   const [activeView,setActiveView]=useState('dashboard');
-  const [role,setRole]=useState('EEII_LOCAL');
+  const [chat]=useState(()=>createAssistantChat(typeof localStorage==='undefined'?null:localStorage));
+  const [role,setRole]=useState(()=>chat.getSnapshot().roleId);
+  const changeRole=(nextRole)=>{chat.changeRole(nextRole);setRole(chat.getSnapshot().roleId)};
   const [context,setContext]=useState({});
   const navigate=(view,payload={})=>{setActiveView(view);setContext(payload||{});window.scrollTo({top:0,behavior:'smooth'})};
-  const props={state,actions,role,onNavigate:navigate,context};
-  const pages={dashboard:<DashboardPage {...props}/>,people:<PeoplePage {...props}/>,references:<ReferencesPage {...props}/>,sessions:<SessionsPage {...props}/>,cases:<CasesPage {...props}/>,attentions:<AttentionsPage {...props}/>,schedule:<SchedulePage {...props}/>,reporting:<ReportingPage {...props}/>,assistant:<AssistantPage {...props}/>,lab:<LabPage {...props}/>};
+  const props={state,actions,role,chat,onNavigate:navigate,context};
+  const pages={dashboard:<DashboardPage key={role} {...props}/>,people:<PeoplePage key={role} {...props}/>,references:<ReferencesPage key={role} {...props}/>,sessions:<SessionsPage key={role} {...props}/>,cases:<CasesPage key={role} {...props}/>,attentions:<AttentionsPage key={role} {...props}/>,schedule:<SchedulePage key={role} {...props}/>,reporting:<ReportingPage key={role} {...props}/>,assistant:<AssistantPage key={role} {...props}/>,lab:<LabPage key={role} {...props}/>};
   const pendingSync=state.syncItems.filter(s=>s.status!=='Sincronizado').length;
   const cfg=roleConfig(role);
-  const overdue=cfg.level==='local'?state.schedule.filter(s=>s.localOffice===cfg.scope&&s.status==='Programada'&&s.date<'2026-09-16').length:0;
+  const overdue=cfg.level==='local'?state.schedule.filter(s=>s.localOffice===cfg.scope&&isOverdue(s)).length:0;
   const transferAlerts=cfg.level==='local'?state.transfers.filter(t=>t.destinationOffice===cfg.scope&&t.status==='Pendiente de continuidad').length:0;
   const alertCount=overdue+transferAlerts;
-  return <AppShell activeView={activeView} onNavigate={navigate} role={role} onRoleChange={setRole} connection={state.connection} pendingSync={pendingSync} onToggleConnection={()=>actions.setConnection(state.connection==='online'?'offline':'online')} onReset={actions.resetDemo} alertCount={alertCount} onGlobalSearch={(q)=>navigate('people',{query:q})}>{pages[activeView]||pages.dashboard}</AppShell>;
+  return <AppShell activeView={activeView} onNavigate={navigate} role={role} onRoleChange={changeRole} connection={state.connection} pendingSync={pendingSync} onToggleConnection={()=>actions.setConnection(state.connection==='online'?'offline':'online')} onReset={actions.resetDemo} alertCount={alertCount} onGlobalSearch={(q)=>navigate('people',{query:q})}>{pages[activeView]||pages.dashboard}</AppShell>;
 }

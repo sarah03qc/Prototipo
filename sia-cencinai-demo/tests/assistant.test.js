@@ -71,7 +71,10 @@ test('network failure and a stalled response body time out and allow another req
   assert.equal(await requestAssistant(payload, { fetchImpl: async () => response(200, { answer: 'Lista' }) }), 'Lista');
 });
 
-test('server deadline releases a hanging provider request without disclosing details', async () => {
+test('server deadline releases a hanging provider request without disclosing details in production', async (t) => {
+  const previous=process.env.NODE_ENV;
+  process.env.NODE_ENV='production';
+  t.after(()=>{if(previous===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=previous;});
   const handler = createAssistantHandler({ model: 'test', timeoutMs: 10, logError: () => {}, ai: { chat: { completions: { create: () => new Promise(() => {}) } } } });
   const res = await invoke(handler);
   assert.deepEqual(res.body, { kind: 'network' });

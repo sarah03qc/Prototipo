@@ -1,3 +1,5 @@
+import { normalizeGroupAttention } from './groupAttentions.js';
+import { normalizeSchedule } from './schedule.js';
 import { calculatePriority, DISCIPLINES } from '../data/catalogs.js';
 import { createReferenceSnapshot, nextReferenceConsecutive, normalizeReferenceMotives, referenceContext } from './references.js';
 
@@ -12,6 +14,7 @@ export function prepareDemoState(saved, seed) {
     const person = people.find(p => p.id === reference.personId);
     const defaults = seed.references.find(r => r.id === reference.id);
     const normalized = normalizeReferenceMotives({ ...defaults, ...reference });
+    if (reference.sentAt === undefined) delete normalized.sentAt;
     references.push({
       ...normalized,
       snapshot: reference.snapshot || referenceContext(reference, person),
@@ -35,10 +38,7 @@ export function prepareDemoState(saved, seed) {
     ...state, people, references, cases,
     timeline: (state.timeline || []).map(event => ({ ...event, detail:event.detail?.replace('Prioridad Urgencia', 'Prioridad Alto') })),
     sessions: state.sessions.map(s => ({ ...s, participants: (s.participants || []).filter(d => DISCIPLINES.includes(d)) })),
-    groupAttentions: state.groupAttentions.map(g => ({
-      ...g,
-      disciplines: (g.disciplines || []).filter(d => DISCIPLINES.includes(d)),
-      companions: g.companions || seed.groupAttentions.find(item => item.id === g.id)?.companions || {},
-    })),
+    schedule: (state.schedule || []).map(normalizeSchedule),
+    groupAttentions: (state.groupAttentions || []).map(normalizeGroupAttention),
   };
 }

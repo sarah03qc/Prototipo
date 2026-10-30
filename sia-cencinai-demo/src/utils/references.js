@@ -52,7 +52,7 @@ export function referenceIdentityRows(context) {
     ['Cliente/beneficiaria', context.name], ['Identificación', context.identification],
     ['Fecha de nacimiento', context.birthDate], ['Edad al momento de la referencia', context.age],
     ['Sexo', context.sex], ['Modalidades/servicios', context.modalities?.join(', ')],
-    ['Establecimiento', context.establishment], ['Oficina Local', context.localOffice], ['Región', context.region],
+    ['Región', context.region], ['Oficina Local', context.localOffice], ['Establecimiento', context.establishment],
     ['Persona encargada', context.guardian?.name], ['Relación', context.guardian?.relationship],
     ['Contacto registrado', context.guardian?.phone], ['Dirección registrada', context.address],
   ];
@@ -68,6 +68,7 @@ export function normalizeReferenceMotives(reference) {
   };
   return {
     ...reference,
+    status: ({ Recibida: 'Pendiente de revisión', Rechazada: 'No requiere A.I.' })[reference.status] || reference.status,
     origin: ({
       'Observación directa': 'Observación',
       'Información aportada por la familia': 'Información aportada por la familia u otros',
@@ -75,4 +76,21 @@ export function normalizeReferenceMotives(reference) {
     motives: [...new Set((reference.motives || []).filter(m => m !== 'Otro factor de riesgo').map(m => replacements[m] || m))],
     factorDetails: Object.fromEntries(Object.entries(reference.factorDetails || {}).filter(([m]) => m !== 'Otro factor de riesgo').map(([m, detail]) => [replacements[m] || m, detail])),
   };
+}
+
+// Sending is a separate event from the functional reference date.
+export function createSentReference(reference, person, references = [], now = new Date()) {
+  return { ...reference, id: `REF-${now.getTime()}`, status: 'Pendiente de revisión', sentAt: now.toISOString(), snapshot: createReferenceSnapshot(person, reference.date), consecutive: nextReferenceConsecutive(person, reference.date, references) };
+}
+export function updateReferenceRecord(reference, patch) {
+  const updated = normalizeReferenceMotives({ ...reference, ...patch });
+  // Historical author and timestamp are immutable, including legacy absence.
+  updated.referredBy = reference.referredBy;
+  if (reference.sentAt === undefined) delete updated.sentAt;
+  else updated.sentAt = reference.sentAt;
+  return updated;
+}
+export function formatSentAt(sentAt) {
+  if (!sentAt || !Number.isFinite(new Date(sentAt).getTime())) return 'No disponible';
+  return new Intl.DateTimeFormat('es-CR', { timeZone: 'America/Costa_Rica', dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(sentAt));
 }
