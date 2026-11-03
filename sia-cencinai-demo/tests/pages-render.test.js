@@ -32,12 +32,17 @@ test('changed pages render with actual components and respect visible role bound
   for(const text of ['Vencida','bg-red-50','Actividad general','Casos específicos','Indisponibilidad de la familia','Visita a establecimiento para Atención Interdisciplinaria']) assert.ok(schedule.includes(text),text);
   assert.ok(!schedule.includes('Sesión de trabajo'));
   const references=await render('ReferencesPage','EEII_LOCAL');
-  for(const text of ['Posibles referencias pendientes','Información complementaria asociada al motivo de referencia','Fecha/hora de envío']) assert.ok(references.includes(text),text);
+  for(const text of ['Información complementaria asociada al motivo de referencia','Fecha/hora de envío']) assert.ok(references.includes(text),text);
   for(const text of ['Marcar recibida','Recibir referencia']) assert.ok(!references.includes(text));
+  assert.ok(!references.includes('Posibles referencias pendientes'));
+  const suggestions=await render('PossibleReferencesPage','EEII_LOCAL');
+  assert.match(suggestions,/Posibles referencias/);
+  assert.match(suggestions,/Nombre o identificación/);
+  assert.equal(await render('PossibleReferencesPage','NIVEL_NACIONAL'),'');
   const attentions=await render('AttentionsPage','EEII_LOCAL');
   assert.ok(!attentions.match(/acompañante|companion/i));
   const reports=await render('ReportingPage','NIVEL_NACIONAL');
-  for(const text of ['Referencias a Atención Interdisciplinaria','Referencias enviadas','Referencias analizadas','Casos activos por sexo','Edad mínima','Principales motivos de cancelación','Atenciones por tipo vigente']) assert.ok(reports.includes(text),text);
+  for(const text of ['Referencias a Atención Interdisciplinaria','Referencias enviadas','Referencias analizadas','Casos por establecimiento','Casos por sexo','Casos por edad actual','Casos por prioridad','Casos por estado','Edad mínima','Principales motivos de cancelación','Principales motivos de referencia a A.I.','Atenciones realizadas por tipo','Distribución de motivos de cierre','Palabras frecuentes de cierres Otro','Porcentaje de niños atendidos','Cantidad de niños atendidos','Generar reporte','Limpiar filtros']) assert.ok(reports.includes(text),text);
 });
 
 

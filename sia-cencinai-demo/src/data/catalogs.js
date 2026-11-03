@@ -7,7 +7,7 @@ export const ROLES = [
   { id: 'ESTABLISHMENT_ASSISTANT2', label: 'Asistente 2 — Establecimiento', scope: 'CINAI Los Robles', level: 'establishment' },
 ];
 
-export const CASE_STATUSES = ['Pendiente de análisis', 'Activo', 'Cerrado', 'Pendiente de continuidad'];
+export const CASE_STATUSES = ['Pendiente de análisis', 'Activo', 'Cerrado'];
 export const PRIORITIES = ['Alto', 'Moderado', 'Bajo'];
 export const RISK_LEVELS = ['Alto', 'Moderado', 'Bajo'];
 export const PROTECTION_LEVELS = ['Alta', 'Moderada', 'Baja'];

@@ -26,8 +26,17 @@ export function prepareDemoState(saved, seed) {
     const priority = caseItem.priority === 'Urgencia' ? 'Alto' : caseItem.priority;
     const riskLevel = caseItem.riskLevel || priority;
     const protectionLevel = caseItem.protectionLevel || (priority === 'Bajo' ? 'Alta' : priority === 'Alto' ? 'Baja' : 'Moderada');
+    const transfer = (state.transfers || []).find(item => item.sourceCaseId === caseItem.id);
+    const closed = caseItem.status === 'Cerrado' || caseItem.status === 'Pendiente de continuidad';
+    const reason = caseItem.closureReason || '';
+    const category = transfer || /traslado/i.test(reason) ? 'Traslado'
+      : ['Cierre satisfactorio', 'Propósitos de A.I. cumplidos'].includes(reason) ? 'Cierre satisfactorio' : 'Otro';
+    const closure = caseItem.closure || (closed ? {
+      caseId:caseItem.id, category, date:caseItem.closedAt || transfer?.date,
+      explanation:category === 'Otro' ? reason : undefined,
+    } : undefined);
     return {
-      ...caseItem, riskLevel, protectionLevel,
+      ...caseItem, status:closed ? 'Cerrado' : caseItem.status, closure, riskLevel, protectionLevel,
       priority: calculatePriority(riskLevel, protectionLevel) || priority,
       disciplines: (caseItem.disciplines || []).filter(d => DISCIPLINES.includes(d)),
       referenceConsecutive: caseItem.referenceConsecutive || reference?.consecutive,
@@ -36,6 +45,7 @@ export function prepareDemoState(saved, seed) {
   });
   return {
     ...state, people, references, cases,
+    transfers:(state.transfers || []).map(item=>item.status==='Pendiente de continuidad'?{...item,status:'Registrado'}:item),
     timeline: (state.timeline || []).map(event => ({ ...event, detail:event.detail?.replace('Prioridad Urgencia', 'Prioridad Alto') })),
     sessions: state.sessions.map(s => ({ ...s, participants: (s.participants || []).filter(d => DISCIPLINES.includes(d)) })),
     schedule: (state.schedule || []).map(normalizeSchedule),

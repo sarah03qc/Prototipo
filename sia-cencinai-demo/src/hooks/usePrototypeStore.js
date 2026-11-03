@@ -1,13 +1,14 @@
+import { addReference, createCaseFromReference, closeCase, transferCase } from '../utils/caseOperations';
+import { reassessCase } from '../utils/caseValuations';
 import { useEffect, useMemo, useState } from 'react';
 import { demoInstitutionalReferralSignals,demoCases,demoCoordinations,demoDocuments,demoGroupAttentions,demoOcr,demoPeople,demoReferences,demoReports,demoSchedule,demoSessions,demoSyncItems,demoTimeline,demoTransfers } from '../data/mockData';
-import { calculatePriority } from '../data/catalogs';
-import { createSentReference, updateReferenceRecord, referenceContext } from '../utils/references';
+import { currentDate } from '../utils/followUp';
+import { updateReferenceRecord } from '../utils/references';
 import { addGroupAttentionRecord } from '../utils/groupAttentions';
 import { normalizeSchedule, updateScheduledActivity } from '../utils/schedule';
 import { prepareDemoState } from '../utils/demoState';
 
 const STORAGE_KEY='sia-cencinai-prototype-v3-1';
-const today='2026-09-16';
 const initialState={institutionalReferralSignals:demoInstitutionalReferralSignals,people:demoPeople,references:demoReferences,cases:demoCases,sessions:demoSessions,timeline:demoTimeline,groupAttentions:demoGroupAttentions,documents:demoDocuments,coordinations:demoCoordinations,reports:demoReports,schedule:demoSchedule,transfers:demoTransfers,syncItems:demoSyncItems,ocr:demoOcr,connection:'online'};
 
 export function usePrototypeStore(){
@@ -16,19 +17,19 @@ export function usePrototypeStore(){
   const actions=useMemo(()=>({
     resetDemo(){setState(prepareDemoState(initialState,initialState))},
     setConnection(connection){setState(p=>({...p,connection}))},
-    addReference(reference){setState(p=>{const person=p.people.find(x=>x.id===reference.personId);if(!person)return p;return {...p,references:[createSentReference(reference,person,p.references),...p.references]}})},
+    addReference(reference){setState(p=>addReference(p,reference))},
     updateReference(id,patch){setState(p=>({...p,references:p.references.map(r=>r.id===id?updateReferenceRecord(r,patch):r)}))},
     addSession(session){setState(p=>({...p,sessions:[{...session,id:`SES-${Date.now()}`},...p.sessions]}))},
     updateSession(id,patch){setState(p=>({...p,sessions:p.sessions.map(s=>s.id===id?{...s,...patch}:s)}))},
-    createCaseFromReference(referenceId,payload){setState(p=>{const ref=p.references.find(r=>r.id===referenceId);const priority=calculatePriority(payload.riskLevel,payload.protectionLevel);if(!ref||!priority)return p;const person=p.people.find(x=>x.id===ref.personId);const id=`AI-${Date.now()}`;const c={id,personId:ref.personId,referenceId,openedAt:payload.openedAt||today,status:'Activo',localOffice:person?.localOffice,establishment:person?.establishment,region:person?.region,...payload,priority,referenceConsecutive:ref.consecutive,referenceSnapshot:structuredClone(referenceContext(ref,person))};return{...p,references:p.references.map(r=>r.id===referenceId?{...r,status:'Admitida a A.I.'}:r),cases:[c,...p.cases],timeline:[{id:`EVT-${Date.now()}`,caseId:id,date:c.openedAt,type:'Sesión interdisciplinaria',title:'Caso admitido a Atención Interdisciplinaria',detail:`Prioridad ${c.priority||'sin asignar'}. ${c.valuationSummary||''}`,discipline:'EE.II.',professional:'Equipo Interdisciplinario'},...p.timeline]}})},
+    createCaseFromReference(referenceId,payload){setState(p=>createCaseFromReference(p,referenceId,payload))},
     addAttention(caseId,attention){setState(p=>({...p,timeline:[{id:`EVT-${Date.now()}`,caseId,...attention},...p.timeline]}))},
     addGroupAttention(attention){setState(p=>addGroupAttentionRecord(p,attention,`GRP-${Date.now()}`))},
     addDocument(doc){setState(p=>({...p,documents:[{...doc,id:`DOC-${Date.now()}`},...p.documents]}))},
     addCoordination(coord){setState(p=>({...p,coordinations:[{...coord,id:`COORD-${Date.now()}`},...p.coordinations]}))},
     addReport(report){setState(p=>({...p,reports:[{...report,id:`REP-${Date.now()}`},...p.reports]}))},
-    closeCase(caseId,{date,reason}){setState(p=>({...p,cases:p.cases.map(c=>c.id===caseId?{...c,status:'Cerrado',closedAt:date,closureReason:reason}:c),timeline:[{id:`EVT-${Date.now()}`,caseId,date,type:'Cierre',title:'Caso de A.I. cerrado',detail:reason,discipline:'EE.II.',professional:'Equipo Interdisciplinario'},...p.timeline]}))},
-    transferCase(caseId,payload){setState(p=>{const c=p.cases.find(x=>x.id===caseId);if(!c)return p;const tr={id:`TR-${Date.now()}`,personId:c.personId,sourceCaseId:caseId,sourceOffice:c.localOffice,destinationOffice:payload.destinationOffice,destinationEstablishment:payload.destinationEstablishment,region:payload.region,date:payload.date,status:'Pendiente de continuidad',reason:payload.reason};return{...p,cases:p.cases.map(x=>x.id===caseId?{...x,status:'Cerrado',closedAt:payload.date,closureReason:'Cierre por traslado'}:x),transfers:[tr,...p.transfers],timeline:[{id:`EVT-${Date.now()}`,caseId,date:payload.date,type:'Traslado',title:'Cierre por traslado',detail:`Destino: ${payload.destinationOffice}. ${payload.reason}`,discipline:'EE.II.',professional:'Equipo Interdisciplinario'},...p.timeline]}})},
-    continueTransfer(transferId){setState(p=>{const tr=p.transfers.find(t=>t.id===transferId);if(!tr)return p;const source=p.cases.find(c=>c.id===tr.sourceCaseId);const person=p.people.find(x=>x.id===tr.personId);const newId=`AI-${Date.now()}`;const newCase={...source,id:newId,openedAt:today,closedAt:undefined,closureReason:undefined,status:'Activo',localOffice:tr.destinationOffice,establishment:tr.destinationEstablishment,region:tr.region,referenceId:source?.referenceId};return{...p,transfers:p.transfers.map(t=>t.id===transferId?{...t,status:'Continuidad confirmada'}:t),cases:[newCase,...p.cases],people:p.people.map(x=>x.id===person?.id?{...x,localOffice:tr.destinationOffice,establishment:tr.destinationEstablishment,region:tr.region}:x),timeline:[{id:`EVT-${Date.now()}`,caseId:newId,date:today,type:'Traslado',title:'Continuidad de A.I. confirmada en destino',detail:`Caso continúa en ${tr.destinationOffice}.`,discipline:'EE.II.',professional:'Equipo Interdisciplinario'},...p.timeline]}})},
+    reassessCase(role,caseId,sessionId,valuation){setState(p=>reassessCase(p,role,caseId,sessionId,valuation,currentDate()))},
+    closeCase(caseId,payload){setState(p=>closeCase(p,caseId,payload))},
+    transferCase(caseId,payload){setState(p=>transferCase(p,caseId,payload))},
     addSchedule(item){setState(p=>({...p,schedule:[{...normalizeSchedule(item),id:`SCH-${Date.now()}`},...p.schedule]}))},
     updateSchedule(id,patch){setState(p=>({...p,schedule:p.schedule.map(s=>s.id===id?updateScheduledActivity(s,patch):s)}))},
     syncAll(){setState(p=>({...p,connection:'online',syncItems:p.syncItems.map(s=>({...s,status:'Sincronizado'}))}))},

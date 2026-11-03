@@ -135,6 +135,7 @@ test('session renders nine collapsed categories, legacy selections, and guards b
   assert.ok(source.includes('Faltan por revisar:'));
   assert.ok(source.includes('`${c.area} — ${c.label}`'));
   assert.ok(source.includes('calculatePriority(valuation.riskLevel,valuation.protectionLevel)'));
-  for (const field of ['riskLevel', 'protectionLevel']) assert.ok(source.includes(`${field}:e.target.value`));
+  const fields = await readFile(new URL('../src/components/ValuationFields.jsx', import.meta.url), 'utf8');
+  for (const field of ['riskLevel', 'protectionLevel']) assert.ok(fields.includes(`${field}:e.target.value`));
   assert.doesNotMatch(source, /groq|fetch\(|scor(?:e|ing)|suggest|recommend/i);
 });

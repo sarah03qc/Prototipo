@@ -1,16 +1,16 @@
+import { pendingReferralSignals } from '../utils/referralSignals';
 import { isOverdue } from '../utils/schedule';
 import React from 'react';
 import { AlertTriangle, ArrowRight, BookOpenCheck, CalendarDays, ClipboardList, FolderHeart, Users } from 'lucide-react';
 import { roleConfig, scopeItems } from '../utils/access';
 import { MetricCard, PageHeader, SectionCard, StatusBadge } from '../components/ui';
 
-export default function DashboardPage({state,role,onNavigate,actions}){
+export default function DashboardPage({state,role,onNavigate}){
   const cfg=roleConfig(role);
   const people=scopeItems(state.people,role);
   const refs=scopeItems(state.references,role);
   const cases=scopeItems(state.cases,role);
   const schedule=scopeItems(state.schedule,role);
-  const transfers=state.transfers.filter(t=>cfg.level==='local'&&t.destinationOffice===cfg.scope&&t.status==='Pendiente de continuidad');
   const overdue=schedule.filter(s=>isOverdue(s));
 
   if(cfg.level==='establishment') return <div className="space-y-6"><PageHeader eyebrow="Establecimiento" title="Inicio"/>
@@ -25,7 +25,7 @@ export default function DashboardPage({state,role,onNavigate,actions}){
   const active=cases.filter(c=>c.status==='Activo');
   const nextSessions=state.sessions.filter(s=>s.status==='Programada');
   return <div className="space-y-6"><PageHeader eyebrow="Oficina Local" title="Buenos días. ¿Qué requiere atención hoy?" actions={<button onClick={()=>onNavigate('references')} className="bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2"><ClipboardList size={16}/> Referencias</button>}/>
-    <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-3"><MetricCard label="Referencias nuevas" value={pendingRefs.length} icon={ClipboardList} tone="amber" onClick={()=>onNavigate('references')}/><MetricCard label="Casos activos" value={active.length} icon={FolderHeart} tone="teal" onClick={()=>onNavigate('cases')}/><MetricCard label="Sesiones próximas" value={nextSessions.length} icon={BookOpenCheck} tone="purple" onClick={()=>onNavigate('sessions')}/><MetricCard label="Ingresos por traslado" value={transfers.length} icon={ArrowRight} tone="blue" onClick={()=>onNavigate('cases',{transferPending:true})}/><MetricCard label="Programación vencida" value={overdue.length} icon={CalendarDays} tone="red" onClick={()=>onNavigate('schedule')}/></div>
+    <div className="grid sm:grid-cols-2 xl:grid-cols-5 gap-3"><MetricCard label="Posibles referencias pendientes" value={pendingReferralSignals(state,role).length} icon={ClipboardList} tone="blue" onClick={()=>onNavigate('possibleReferences')}/><MetricCard label="Referencias nuevas" value={pendingRefs.length} icon={ClipboardList} tone="amber" onClick={()=>onNavigate('references')}/><MetricCard label="Casos activos" value={active.length} icon={FolderHeart} tone="teal" onClick={()=>onNavigate('cases')}/><MetricCard label="Sesiones próximas" value={nextSessions.length} icon={BookOpenCheck} tone="purple" onClick={()=>onNavigate('sessions')}/><MetricCard label="Programación vencida" value={overdue.length} icon={CalendarDays} tone="red" onClick={()=>onNavigate('schedule')}/></div>
     {overdue.length>0&&<SectionCard title="Notificaciones"><div className="space-y-2">{overdue.map(x=><button key={x.id} onClick={()=>onNavigate('schedule')} className="w-full text-left border border-red-200 bg-red-50 rounded-xl p-3"><div className="flex justify-between gap-3"><div><p className="text-sm font-semibold">{x.title}</p><p className="text-xs text-stone-600">⚠ Vencida — Programada para {x.date}. Actualice si fue realizada, reprogramada o cancelada.</p></div><StatusBadge status={x.status}/></div></button>)}</div></SectionCard>}
     <div className="grid lg:grid-cols-2 gap-5"><SectionCard title="Referencias por revisar"><div className="space-y-2">{pendingRefs.slice(0,4).map(r=>{const p=state.people.find(x=>x.id===r.personId);return <button key={r.id} onClick={()=>onNavigate('references',{referenceId:r.id})} className="w-full border rounded-xl p-3 text-left hover:border-teal-300"><div className="flex justify-between"><div><p className="text-sm font-semibold">{p?.name}</p><p className="text-xs text-stone-500">{r.establishment} · {r.referredBy}</p></div><StatusBadge status={r.type}/></div></button>})}</div></SectionCard><SectionCard title="Próximas acciones"><div className="space-y-2">{active.filter(c=>c.nextAction).map(c=>{const p=state.people.find(x=>x.id===c.personId);return <button key={c.id} onClick={()=>onNavigate('cases',{caseId:c.id})} className="w-full text-left border rounded-xl p-3"><p className="text-sm font-semibold">{p?.name}</p><p className="text-xs text-stone-500">{c.nextAction} · {c.nextActionDate}</p></button>})}</div></SectionCard></div>
   </div>;
