@@ -12,7 +12,10 @@ export function reportingMetrics(state, role, filters) {
   const personIds = new Set(people.filter(p=>!filters.sex||p.sex===filters.sex).map(p => p.id));
   const universe = applyHierarchyFilters(scopeItems(state.cases, role), filters).filter(c=>personIds.has(c.personId)&&(!filters.priority||c.priority===filters.priority));
   const cases = universe.filter(c => c.openedAt <= end && (!filters.status || c.status === filters.status) && (!filters.priority || c.priority === filters.priority));
-  const active = cases.filter(c => c.status === 'Activo');
+  const periodCases=universe.filter(c=>!filters.status||c.status===filters.status);
+  const currentActive=periodCases.filter(c=>c.status==='Activo');
+  const startedInPeriod=periodCases.filter(c=>inPeriod(c.openedAt,start,end));
+  const closedInPeriod=periodCases.filter(c=>c.status==='Cerrado'&&inPeriod(c.closure?.date||c.closedAt,start,end));
   const refs = applyHierarchyFilters(scopeItems(state.references, role), filters).filter(r => personIds.has(r.personId) && inPeriod(sentDate(r) || r.date, start, end));
   const eligiblePeople = people.filter(p=>personIds.has(p.id)&&(!filters.status&&!filters.priority||cases.some(c=>c.personId===p.id)));
   const attentionMatches = a => inPeriod(a.date,start,end) && (!filters.discipline || a.disciplines?.includes(filters.discipline)) &&
@@ -48,10 +51,11 @@ export function reportingMetrics(state, role, filters) {
   const notRequired = refs.filter(r => r.status === 'No requiere A.I.').length;
   return {
     cases, refs, events, uniquePeople, byType, coverage, closureWords,
+    caseCounts:{currentActive:currentActive.length,startedInPeriod:startedInPeriod.length,closedInPeriod:closedInPeriod.length},
     closureReasons:countValues(closed.map(c=>c.closure?.category||'Otro')),
     sent: refs.filter(r => inPeriod(sentDate(r), start, end)).length,
     admitted, notRequired, analyzed: admitted + notRequired,
-    withoutAttention: active.filter(c => !hasAttentionInPeriod(state, c, start, end)).length,
+    withoutAttention: activeNow.filter(c => !hasAttentionInPeriod(state, c, start, end)).length,
     byEstablishment: countValues(cases.map(c => c.establishment)),
     bySex: countValues(cases.map(c => people.find(p => p.id === c.personId)?.sex)),
     byAge: countValues(cases.map(c => { const years = age(people.find(p => p.id === c.personId) || {}); return Number.isFinite(years) ? (years<3?'0–2 años':years<6?'3–5 años':years<13?'6–12 años':years<18?'13–17 años':'18 años o más') : 'No disponible'; })),
